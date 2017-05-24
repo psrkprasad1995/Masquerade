@@ -14,18 +14,28 @@
  * limitations under the License.
  */
 
-package test;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.flipkart.masquerade.test;
 
 /**
- * Created by shrey.garg on 12/05/17.
+ * Created by shrey.garg on 25/04/17.
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface ValidationAnnotations {
-    ValidationAnnotation[] value();
+public class Eval {
+    private Platform platform;
+    private int version;
+
+    public Platform getPlatform() {
+        return platform;
+    }
+
+    public void setPlatform(Platform platform) {
+        this.platform = platform;
+    }
+
+    public int getVersion() {
+        return version;
+    }
+
+    public void setVersion(int version) {
+        this.version = version;
+    }
 }

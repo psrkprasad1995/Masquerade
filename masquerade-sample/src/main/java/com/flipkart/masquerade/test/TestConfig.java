@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package test;
+package com.flipkart.masquerade.test;
 
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.rule.Operator;

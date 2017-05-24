@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-package test.actual;
+package com.flipkart.masquerade.test.actual;
 
-import test.Platform;
-import test.ValidationAnnotation;
+import com.flipkart.masquerade.test.Platform;
+import com.flipkart.masquerade.test.ValidationAnnotation;
 
 /**
  * Created by shrey.garg on 24/04/17.

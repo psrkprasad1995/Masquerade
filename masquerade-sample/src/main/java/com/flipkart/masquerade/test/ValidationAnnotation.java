@@ -14,27 +14,18 @@
  * limitations under the License.
  */
 
-package test.actual;
+package com.flipkart.masquerade.test;
+
+import java.lang.annotation.*;
 
 /**
- * Created by shrey.garg on 02/05/17.
+ * Created by shrey.garg on 24/04/17.
  */
-public class Wrapper<T> {
-    T response;
-
-    public T getResponse() {
-        return response;
-    }
-
-    public void setResponse(T response) {
-        this.response = response;
-    }
-
-    @Override
-    public String toString() {
-        final StringBuilder sb = new StringBuilder("Wrapper{");
-        sb.append("response=").append(response);
-        sb.append('}');
-        return sb.toString();
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.FIELD)
+@Repeatable(ValidationAnnotations.class)
+public @interface ValidationAnnotation {
+    Platform name();
+    int since();
+    int till() default 0;
 }

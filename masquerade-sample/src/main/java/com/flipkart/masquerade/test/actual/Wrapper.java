@@ -14,28 +14,27 @@
  * limitations under the License.
  */
 
-package test;
+package com.flipkart.masquerade.test.actual;
 
 /**
- * Created by shrey.garg on 25/04/17.
+ * Created by shrey.garg on 02/05/17.
  */
-public class Eval {
-    private Platform platform;
-    private int version;
+public class Wrapper<T> {
+    T response;
 
-    public Platform getPlatform() {
-        return platform;
+    public T getResponse() {
+        return response;
     }
 
-    public void setPlatform(Platform platform) {
-        this.platform = platform;
+    public void setResponse(T response) {
+        this.response = response;
     }
 
-    public int getVersion() {
-        return version;
-    }
-
-    public void setVersion(int version) {
-        this.version = version;
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("Wrapper{");
+        sb.append("response=").append(response);
+        sb.append('}');
+        return sb.toString();
     }
 }

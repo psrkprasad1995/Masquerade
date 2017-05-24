@@ -28,7 +28,7 @@
                 <artifactId>masquerade-maven-plugin</artifactId>
                 <version>0.1.0-SNAPSHOT</version>
                 <configuration>
-                    <configurationClass>test.TestConfig</configurationClass>
+                    <configurationClass>com.flipkart.masquerade.test.TestConfig</configurationClass>
                     <targetFile>${project.build.sourceDirectory}</targetFile>
                 </configuration>
                 <executions>

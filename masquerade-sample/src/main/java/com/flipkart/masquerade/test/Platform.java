@@ -14,18 +14,14 @@
  * limitations under the License.
  */
 
-package test;
-
-import java.lang.annotation.*;
+package com.flipkart.masquerade.test;
 
 /**
- * Created by shrey.garg on 24/04/17.
+ * Created by shrey.garg on 12/05/17.
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-@Repeatable(ValidationAnnotations.class)
-public @interface ValidationAnnotation {
-    Platform name();
-    int since();
-    int till() default 0;
+public enum Platform {
+    ANDROID,
+    WEB,
+    iOS,
+    MOBILE_WEB
 }
