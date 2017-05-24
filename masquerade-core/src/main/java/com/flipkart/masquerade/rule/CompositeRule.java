@@ -15,7 +15,7 @@ public class CompositeRule extends ValueRule {
     }
 
     public CompositeRule(Conjunction conjunction, ValueRule... valueRules) {
-        if (conjunction == null || valueRules == null) {
+        if (conjunction == null || valueRules == null || valueRules.length == 0) {
             throw new NullPointerException("CompositeRule does not accept null values");
         }
         this.valueRules = Arrays.asList(valueRules);
