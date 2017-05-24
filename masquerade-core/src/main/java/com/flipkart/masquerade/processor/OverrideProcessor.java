@@ -176,9 +176,8 @@ public class OverrideProcessor {
             operands.add(evalFunc);
             operands.add(value);
         }
-        operation.delete(operation.length() - 4, operation.length());
 
-        return operation.toString();
+        return operation.delete(operation.length() - 4, operation.length()).toString();
     }
 
     private FieldDescriptor generateDescriptor(Object value) {
