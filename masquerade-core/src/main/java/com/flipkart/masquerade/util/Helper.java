@@ -1,0 +1,103 @@
+package com.flipkart.masquerade.util;
+
+import com.flipkart.masquerade.Configuration;
+import com.flipkart.masquerade.rule.Rule;
+import com.flipkart.masquerade.rule.ValueRule;
+import com.google.common.reflect.ClassPath;
+import com.squareup.javapoet.ClassName;
+
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static com.flipkart.masquerade.util.Strings.*;
+
+/**
+ * Created by shrey.garg on 25/04/17.
+ */
+public class Helper {
+    public static String getSetterName(String name) {
+        String capitalizedName = capitalize(name);
+        String prefix = "set";
+        return prefix + capitalizedName;
+    }
+
+    public static String getGetterName(String name) {
+        String capitalizedName = capitalize(name);
+        String prefix = "get";
+        return prefix + capitalizedName;
+    }
+
+    public static Set<Class<?>> getWrapperTypes() {
+        Set<Class<?>> ret = new HashSet<>();
+        ret.add(Boolean.class);
+        ret.add(Character.class);
+        ret.add(Byte.class);
+        ret.add(Short.class);
+        ret.add(Integer.class);
+        ret.add(Long.class);
+        ret.add(Float.class);
+        ret.add(Double.class);
+        ret.add(Void.class);
+        return ret;
+    }
+
+    private static String capitalize(String name) {
+        return name.substring(0, 1).toUpperCase() + name.substring(1);
+    }
+
+    public static ClassName getRuleInterface(Configuration configuration, Rule rule) {
+        return ClassName.get(configuration.getCloakPackage(), rule.getName() + INTERFACE_SUFFIX);
+    }
+
+    public static String getInterfaceName(Rule rule) {
+        return rule.getName() + INTERFACE_SUFFIX;
+    }
+
+    public static String getImplementationName(Rule rule, Class<?> clazz) {
+        return clazz.getSimpleName() + rule.getName() + INTERFACE_SUFFIX;
+    }
+
+    public static String getImplementationPackage(Configuration configuration, Class<?> clazz) {
+        return configuration.getCloakPackage() + "." + clazz.getPackage().getName();
+    }
+
+    public static ClassName getEntryClass(Configuration configuration) {
+        return ClassName.get(configuration.getCloakPackage(), ENTRY_CLASS);
+    }
+
+    public static Set<ClassPath.ClassInfo> getPackageClasses(ClassLoader classLoader, List<String> packagesToScan) throws IOException {
+        ClassPath classpath = ClassPath.from(classLoader);
+        Set<ClassPath.ClassInfo> classDescriptions = new HashSet<>();
+        for (String basePackage : packagesToScan) {
+            classDescriptions.addAll(classpath.getTopLevelClassesRecursive(basePackage));
+        }
+        return classDescriptions;
+    }
+
+    public static List<Field> getNonStaticFields(Class<?> type) {
+        List<Field> fields = new ArrayList<>();
+        for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+            fields.addAll(
+                    Arrays.asList(c.getDeclaredFields()).stream()
+                            .filter(field -> !Modifier.isStatic(field.getModifiers()))
+                            .collect(Collectors.toList())
+            );
+        }
+        return fields;
+    }
+
+    public static String getEvaluationFunction(ValueRule valueRule) {
+        return EVAL_PARAMETER + "." + valueRule.getEvaluatorFunction();
+    }
+
+    public static boolean isAbstract(Class clazz) {
+        return Modifier.isAbstract(clazz.getModifiers());
+    }
+
+    public static boolean isPublic(Class clazz) {
+        return Modifier.isPublic(clazz.getModifiers());
+    }
+}
