@@ -17,8 +17,7 @@
 package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
-import com.flipkart.masquerade.rule.Rule;
-import com.flipkart.masquerade.rule.ValueRule;
+import com.flipkart.masquerade.rule.*;
 import com.flipkart.masquerade.util.FieldDescriptor;
 import com.squareup.javapoet.*;
 
@@ -132,38 +131,54 @@ public class OverrideProcessor {
 
     private void constructOperation(Rule rule, Class<? extends Annotation> annotationClass, Annotation annotation, MethodSpec.Builder builder, String fieldName) {
         List<Object> operands = new ArrayList<>();
-        StringBuilder operation = new StringBuilder();
 
-        for (ValueRule valueRule : rule.getValueRules()) {
+        CompositeRule baseRule = rule.getValueRule();
+        String operation = constructBasicOperation(baseRule, baseRule.getConjunction(), annotationClass, annotation, operands);
+
+        builder.beginControlFlow("if (" + operation + ")", operands.toArray());
+        builder.addStatement("$L.$L(null)", OBJECT_PARAMETER, getSetterName(fieldName));
+        builder.endControlFlow();
+    }
+
+    private String constructBasicOperation(CompositeRule compositeRule, Conjunction conjunction, Class<? extends Annotation> annotationClass, Annotation annotation, List<Object> operands) {
+        StringBuilder operation = new StringBuilder();
+        for (ValueRule valueRule : compositeRule.getValueRules()) {
+            if (valueRule instanceof CompositeRule) {
+                CompositeRule innerRule = (CompositeRule) valueRule;
+                operation.append("(").append(constructBasicOperation(innerRule, innerRule.getConjunction(), annotationClass, annotation, operands)).append(")").append(" ").append(conjunction.getSymbol()).append(" ");
+                continue;
+            }
+
             Object value;
             Object defaultValue;
+
+            BasicRule basicRule = (BasicRule) valueRule;
+
             try {
-                Method annotationValue = annotationClass.getDeclaredMethod(valueRule.getAnnotationMember());
+                Method annotationValue = annotationClass.getDeclaredMethod(basicRule.getAnnotationMember());
                 value = annotationValue.invoke(annotation);
                 defaultValue = annotationValue.getDefaultValue();
             } catch (Exception e) {
                 throw new UnsupportedOperationException("Please provide a annotation member that exists");
             }
 
-            if (valueRule.isDefaultIgnored() && value.equals(defaultValue)) {
+            if (basicRule.isDefaultIgnored() && value.equals(defaultValue)) {
                 continue;
             }
 
             FieldDescriptor descriptor = generateDescriptor(value);
-            valueRule.getOperator().getGenerateOperation().accept(operation, descriptor);
-            operation.append(" && ");
+            basicRule.getOperator().getGenerateOperation().accept(operation, descriptor);
+            operation.append(" ").append(conjunction.getSymbol()).append(" ");
 
-            String evalFunc = getEvaluationFunction(valueRule);
+            String evalFunc = getEvaluationFunction(basicRule);
             value = handleEnum(descriptor, value);
 
             operands.add(evalFunc);
             operands.add(value);
         }
-
         operation.delete(operation.length() - 4, operation.length());
-        builder.beginControlFlow("if (" + operation.toString() + ")", operands.toArray());
-        builder.addStatement("$L.$L(null)", OBJECT_PARAMETER, getSetterName(fieldName));
-        builder.endControlFlow();
+
+        return operation.toString();
     }
 
     private FieldDescriptor generateDescriptor(Object value) {

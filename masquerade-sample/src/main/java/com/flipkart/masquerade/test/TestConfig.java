@@ -17,9 +17,7 @@
 package com.flipkart.masquerade.test;
 
 import com.flipkart.masquerade.Configuration;
-import com.flipkart.masquerade.rule.Operator;
-import com.flipkart.masquerade.rule.Rule;
-import com.flipkart.masquerade.rule.ValueRule;
+import com.flipkart.masquerade.rule.*;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -33,18 +31,24 @@ public class TestConfig implements Configuration {
     private static Set<Rule> rules = new HashSet<>();
 
     static {
-        ValueRule valueRuleOne = new ValueRule("since", Operator.GREATER_EQUAL, "getVersion()");
-        ValueRule valueRuleThree = new ValueRule("till", Operator.LESSER_EQUAL, "getVersion()");
-        ValueRule valueRuleTwo = new ValueRule("name", Operator.EQUAL, "getPlatform()");
-        List<ValueRule> valueRules = Arrays.asList(valueRuleTwo, valueRuleOne, valueRuleThree);
-
-        Rule rule = new Rule("VaAn", ValidationAnnotation.class, Eval.class, valueRules);
+        Rule rule = new Rule(
+                "VaAn",
+                ValidationAnnotation.class,
+                Eval.class,
+                new CompositeRule(
+                        new BasicRule("name", Operator.EQUAL, "getPlatform()"),
+                        new CompositeRule(Conjunction.OR,
+                                new BasicRule("since", Operator.LESSER, "getVersion()"),
+                                new BasicRule("till", Operator.GREATER, "getVersion()")
+                        )
+                )
+        );
         rules.add(rule);
     }
 
     @Override
     public List<String> getPackagesToScan() {
-        return Arrays.asList("test.actual");
+        return Arrays.asList("com.flipkart.masquerade.test.actual");
     }
 
     @Override

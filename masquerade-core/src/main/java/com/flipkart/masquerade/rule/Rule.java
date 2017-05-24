@@ -17,7 +17,6 @@
 package com.flipkart.masquerade.rule;
 
 import java.lang.annotation.Annotation;
-import java.util.List;
 
 /**
  * Created by shrey.garg on 24/04/17.
@@ -26,17 +25,17 @@ public class Rule {
     private final String name;
     private final Class<? extends Annotation> annotationClass;
     private final Class<?> evaluatorClass;
-    private final List<ValueRule> valueRules;
+    private final CompositeRule valueRule;
 
-    public Rule(String name, Class<? extends Annotation> annotationClass, Class<?> evaluatorClass, List<ValueRule> valueRules) {
-        if (name == null || annotationClass == null || evaluatorClass == null || valueRules == null) {
+    public Rule(String name, Class<? extends Annotation> annotationClass, Class<?> evaluatorClass, CompositeRule valueRule) {
+        if (name == null || annotationClass == null || evaluatorClass == null || valueRule == null) {
             throw new NullPointerException("Rule class does not accept any null parameters");
         }
 
         this.name = name;
         this.annotationClass = annotationClass;
         this.evaluatorClass = evaluatorClass;
-        this.valueRules = valueRules;
+        this.valueRule = valueRule;
     }
 
     public String getName() {
@@ -51,8 +50,8 @@ public class Rule {
         return evaluatorClass;
     }
 
-    public List<ValueRule> getValueRules() {
-        return valueRules;
+    public CompositeRule getValueRule() {
+        return valueRule;
     }
 
     @Override

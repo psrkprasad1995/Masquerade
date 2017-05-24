@@ -17,9 +17,7 @@
 package com.flipkart.masquerade.test;
 
 import com.flipkart.masquerade.Configuration;
-import com.flipkart.masquerade.rule.Operator;
-import com.flipkart.masquerade.rule.Rule;
-import com.flipkart.masquerade.rule.ValueRule;
+import com.flipkart.masquerade.rule.*;
 import com.flipkart.masquerade.test.annotation.ConfigProvider;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.ParameterContext;
@@ -49,13 +47,13 @@ public class ConfigurationExtension implements ParameterResolver {
         when(configuration.getCloakPackage()).thenReturn("com.flipkart.masquerade.test");
         when(configuration.getPackagesToScan()).thenReturn(Arrays.asList("com.flipkart.test"));
 
-        ValueRule valueRule = new ValueRule("a", Operator.LESSER, "getX()");
-
         Rule rule = new Rule(
                 "TestOne",
                 ValidationTest.class,
                 Evaluator.class,
-                Arrays.asList(valueRule)
+                new CompositeRule(
+                        new BasicRule("a", Operator.LESSER, "getX()")
+                )
         );
 
         Set<Rule> ruleSet = new HashSet<>(Arrays.asList(rule));

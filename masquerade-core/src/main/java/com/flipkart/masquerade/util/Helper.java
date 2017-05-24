@@ -17,8 +17,8 @@
 package com.flipkart.masquerade.util;
 
 import com.flipkart.masquerade.Configuration;
+import com.flipkart.masquerade.rule.BasicRule;
 import com.flipkart.masquerade.rule.Rule;
-import com.flipkart.masquerade.rule.ValueRule;
 import com.google.common.reflect.ClassPath;
 import com.squareup.javapoet.ClassName;
 
@@ -105,8 +105,8 @@ public class Helper {
         return fields;
     }
 
-    public static String getEvaluationFunction(ValueRule valueRule) {
-        return EVAL_PARAMETER + "." + valueRule.getEvaluatorFunction();
+    public static String getEvaluationFunction(BasicRule basicRule) {
+        return EVAL_PARAMETER + "." + basicRule.getEvaluatorFunction();
     }
 
     public static boolean isAbstract(Class clazz) {
