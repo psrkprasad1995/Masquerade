@@ -1,6 +1,6 @@
 # Masquerade
 
-Lyrics is a simple to use, yet powerful annotation processing library, which lets users define and use their own annotations to generate code by writing just a few lines of configuration.
+Masquerade is a simple to use, yet powerful annotation processing library, which lets users define and use their own annotations to generate code by writing just a few lines of configuration.
 
 ## Links
 
