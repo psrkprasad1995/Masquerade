@@ -25,7 +25,7 @@ import com.flipkart.masquerade.test.ValidationAnnotation;
 public class One {
     private String t1;
     @ValidationAnnotation(name = Platform.ANDROID, since = 9)
-    @ValidationAnnotation(name = Platform.iOS, since = 4)
+    @ValidationAnnotation(name = Platform.iOS, since = 0, till = 4)
     private Integer t2;
 
     public String getT1() {

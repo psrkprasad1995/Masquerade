@@ -26,6 +26,6 @@ import java.lang.annotation.*;
 @Repeatable(ValidationAnnotations.class)
 public @interface ValidationAnnotation {
     Platform name();
-    int since();
+    int since() default 0;
     int till() default 0;
 }

@@ -18,6 +18,7 @@ package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.rule.Rule;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
@@ -52,6 +53,8 @@ public class RuleObjectProcessor {
     public void addEntry(Rule rule) {
         MethodSpec.Builder objectMaskBuilder = MethodSpec.methodBuilder(ENTRY_METHOD);
         objectMaskBuilder.addModifiers(Modifier.PUBLIC);
+        /* Suppress warnings as the generated code will never cause a CLassCastException */
+        objectMaskBuilder.addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "$S", "unchecked").build());
         /* Adds an Object class parameter for which all the process at runtime will happen */
         objectMaskBuilder.addParameter(Object.class, OBJECT_PARAMETER);
         /* The second parameter refers to the Evaluator Object which will be used for comparisons */
