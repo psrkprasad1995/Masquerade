@@ -89,6 +89,13 @@ public class RuleObjectProcessor {
         /* And recursively call this entry method for each object */
         objectMaskBuilder.addStatement("this.$L(o, $L)", ENTRY_METHOD, EVAL_PARAMETER);
         objectMaskBuilder.endControlFlow();
+        /* If it's not a Collection, then check if the Object is an array */
+        objectMaskBuilder.nextControlFlow("else if ($L instanceof Object[])", OBJECT_PARAMETER);
+        /* If it is, then iterate over the array */
+        objectMaskBuilder.beginControlFlow("for (Object o : ((Object[]) $L))", OBJECT_PARAMETER);
+        /* And recursively call this entry method for each object */
+        objectMaskBuilder.addStatement("this.$L(o, $L)", ENTRY_METHOD, EVAL_PARAMETER);
+        objectMaskBuilder.endControlFlow();
         objectMaskBuilder.endControlFlow();
         objectMaskBuilder.endControlFlow();
 

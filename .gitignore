@@ -3,10 +3,10 @@
 *.iml
 *.ipr
 *.iws
-*.iml
 *.log
 .classpath
 target/
 out/
 exportToHTML/
 .settings/
+masquerade-sample/src/main/java/org/
