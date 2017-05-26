@@ -22,6 +22,7 @@ package com.flipkart.masquerade.test;
 public class Eval {
     private Platform platform;
     private int version;
+    private String client;
 
     public Platform getPlatform() {
         return platform;
@@ -37,5 +38,13 @@ public class Eval {
 
     public void setVersion(int version) {
         this.version = version;
+    }
+
+    public String getClient() {
+        return client;
+    }
+
+    public void setClient(String client) {
+        this.client = client;
     }
 }

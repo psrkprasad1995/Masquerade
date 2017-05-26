@@ -150,7 +150,12 @@ public class OverrideProcessor {
         for (ValueRule valueRule : compositeRule.getValueRules()) {
             if (valueRule instanceof CompositeRule) {
                 CompositeRule innerRule = (CompositeRule) valueRule;
-                operation.append("(").append(constructBasicOperation(innerRule, innerRule.getConjunction(), annotationClass, annotation, operands)).append(")").append(" ").append(conjunction.getSymbol()).append(" ");
+                String constructedCompositeOperation = constructBasicOperation(innerRule, innerRule.getConjunction(), annotationClass, annotation, operands);
+                if (constructedCompositeOperation.length() == 0) {
+                    continue;
+                }
+
+                operation.append("(").append(constructedCompositeOperation).append(")").append(" ").append(conjunction.getSymbol()).append(" ");
                 continue;
             }
 
@@ -182,7 +187,7 @@ public class OverrideProcessor {
             operands.add(value);
         }
 
-        return operation.delete(operation.length() - 4, operation.length()).toString();
+        return operation.length() < 4 ? operation.toString() : operation.delete(operation.length() - 4, operation.length()).toString();
     }
 
     private FieldDescriptor generateDescriptor(Object value) {

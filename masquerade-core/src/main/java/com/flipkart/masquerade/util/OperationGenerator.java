@@ -32,7 +32,7 @@ public class OperationGenerator {
         if (descriptor.isEquatable()) {
             operation.append("($L != $L)");
         } else {
-            operation.append("(!$L.equals($L))");
+            operation.append("(!$L.equals($S))");
         }
     }
 
@@ -40,7 +40,8 @@ public class OperationGenerator {
         if (descriptor.isPrimitive()) {
             operation.append("($L > $L)");
         } else if (descriptor.isComparable()) {
-            operation.append("($L.compareTo($L) > 0)");
+            String placeholder = descriptor.isEnumeration() ? "$L" : "$S";
+            operation.append("($L.compareTo(" + placeholder + ") > 0)");
         } else {
             throw new UnsupportedOperationException("Cannot compare non-comparable types");
         }
@@ -50,7 +51,8 @@ public class OperationGenerator {
         if (descriptor.isPrimitive()) {
             operation.append("($L >= $L)");
         } else if (descriptor.isComparable()) {
-            operation.append("($L.compareTo($L) >= 0)");
+            String placeholder = descriptor.isEnumeration() ? "$L" : "$S";
+            operation.append("($L.compareTo(" + placeholder + ") >= 0)");
         } else {
             throw new UnsupportedOperationException("Cannot compare non-comparable types");
         }
@@ -60,7 +62,8 @@ public class OperationGenerator {
         if (descriptor.isPrimitive()) {
             operation.append("($L < $L)");
         } else if (descriptor.isComparable()) {
-            operation.append("($L.compareTo($L) < 0)");
+            String placeholder = descriptor.isEnumeration() ? "$L" : "$S";
+            operation.append("($L.compareTo(" + placeholder + ") < 0)");
         } else {
             throw new UnsupportedOperationException("Cannot compare non-comparable types");
         }
@@ -70,7 +73,8 @@ public class OperationGenerator {
         if (descriptor.isPrimitive()) {
             operation.append("($L <= $L)");
         } else if (descriptor.isComparable()) {
-            operation.append("($L.compareTo($L) <= 0)");
+            String placeholder = descriptor.isEnumeration() ? "$L" : "$S";
+            operation.append("($L.compareTo(" + placeholder + ") <= 0)");
         } else {
             throw new UnsupportedOperationException("Cannot compare non-comparable types");
         }

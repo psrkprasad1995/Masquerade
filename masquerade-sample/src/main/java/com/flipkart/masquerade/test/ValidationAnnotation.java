@@ -26,6 +26,7 @@ import java.lang.annotation.*;
 @Repeatable(ValidationAnnotations.class)
 public @interface ValidationAnnotation {
     Platform name();
+    String client() default "app";
     int since() default 0;
     int till() default 0;
 }

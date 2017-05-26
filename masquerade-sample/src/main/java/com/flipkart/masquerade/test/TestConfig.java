@@ -40,7 +40,8 @@ public class TestConfig implements Configuration {
                         new CompositeRule(Conjunction.OR,
                                 new BasicRule("since", Operator.LESSER, "getVersion()"),
                                 new BasicRule("till", Operator.GREATER, "getVersion()")
-                        )
+                        ),
+                        new BasicRule("client", Operator.UNEQUAL, "getClient()")
                 )
         );
         rules.add(rule);
