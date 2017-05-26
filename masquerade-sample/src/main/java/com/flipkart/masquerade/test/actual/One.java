@@ -27,6 +27,7 @@ public class One {
     @ValidationAnnotation(name = Platform.ANDROID, since = 9)
     @ValidationAnnotation(name = Platform.iOS, since = 0, till = 4)
     private Integer t2;
+    private Two two;
 
     public String getT1() {
         return t1;
@@ -51,5 +52,13 @@ public class One {
         sb.append(", t2=").append(t2);
         sb.append('}');
         return sb.toString();
+    }
+
+    public Two getTwo() {
+        return two;
+    }
+
+    public void setTwo(Two two) {
+        this.two = two;
     }
 }

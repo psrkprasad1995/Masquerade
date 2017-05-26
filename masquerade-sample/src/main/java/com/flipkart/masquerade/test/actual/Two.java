@@ -16,6 +16,7 @@
 
 package com.flipkart.masquerade.test.actual;
 
+import com.flipkart.masquerade.annotation.IgnoreCloak;
 import com.flipkart.masquerade.test.Platform;
 import com.flipkart.masquerade.test.ValidationAnnotation;
 
@@ -26,6 +27,8 @@ public class Two {
     @ValidationAnnotation(name = Platform.ANDROID, since = 2, till = 9)
     private String l1;
     private Integer l2;
+    @IgnoreCloak
+    private One one;
 
     public String getL1() {
         return l1;
@@ -50,5 +53,13 @@ public class Two {
         sb.append(", l2=").append(l2);
         sb.append('}');
         return sb.toString();
+    }
+
+    public One getOne() {
+        return one;
+    }
+
+    public void setOne(One one) {
+        this.one = one;
     }
 }

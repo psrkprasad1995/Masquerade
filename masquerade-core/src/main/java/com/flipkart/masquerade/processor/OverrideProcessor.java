@@ -17,6 +17,7 @@
 package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
+import com.flipkart.masquerade.annotation.IgnoreCloak;
 import com.flipkart.masquerade.rule.*;
 import com.flipkart.masquerade.util.FieldDescriptor;
 import com.squareup.javapoet.*;
@@ -64,7 +65,7 @@ public class OverrideProcessor {
 
         /* Only consider fields for processing that are not static */
         for (Field field : getNonStaticFields(clazz)) {
-            if (field.getType().isPrimitive()) {
+            if (field.getType().isPrimitive() || field.isAnnotationPresent(IgnoreCloak.class)) {
                 continue;
             }
 
