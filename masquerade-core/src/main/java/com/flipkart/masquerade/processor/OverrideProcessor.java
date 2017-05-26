@@ -64,6 +64,10 @@ public class OverrideProcessor {
 
         /* Only consider fields for processing that are not static */
         for (Field field : getNonStaticFields(clazz)) {
+            if (field.getType().isPrimitive()) {
+                continue;
+            }
+
             Class<? extends Annotation> annotationClass = rule.getAnnotationClass();
             Annotation[] annotations = field.getAnnotationsByType(annotationClass);
             if (annotations != null && annotations.length != 0) {
