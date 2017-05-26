@@ -23,10 +23,12 @@ import com.flipkart.masquerade.processor.RuleObjectProcessor;
 import com.flipkart.masquerade.rule.Rule;
 import com.flipkart.masquerade.util.TypeSpecContainer;
 import com.google.common.reflect.ClassPath;
+import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
 import com.squareup.javapoet.TypeSpec;
 
+import javax.annotation.Generated;
 import javax.lang.model.element.Modifier;
 import java.io.File;
 import java.io.IOException;
@@ -100,7 +102,8 @@ public class Masquerade {
         specs.add(new TypeSpecContainer(configuration.getCloakPackage(), builder.build()));
 
         for (TypeSpecContainer container : specs) {
-            JavaFile javaFile = JavaFile.builder(container.getPackagePath(), container.getSpec())
+            TypeSpec.Builder typeBuilder = container.getSpec().toBuilder().addAnnotation(AnnotationSpec.builder(Generated.class).addMember("value", "$S", "com.flipkart.masquerade.Masquerade").build());
+            JavaFile javaFile = JavaFile.builder(container.getPackagePath(), typeBuilder.build())
                     .indent("    ")
                     .skipJavaLangImports(true)
                     .build();
