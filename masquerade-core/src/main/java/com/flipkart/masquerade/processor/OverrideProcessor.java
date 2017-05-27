@@ -27,6 +27,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.flipkart.masquerade.util.Helper.*;
@@ -73,11 +74,11 @@ public class OverrideProcessor {
             Annotation[] annotations = field.getAnnotationsByType(annotationClass);
             if (annotations != null && annotations.length != 0) {
                 for (Annotation annotation : annotations) {
-                    constructOperation(rule, annotationClass, annotation, methodBuilder, field.getName());
+                    constructOperation(rule, annotationClass, annotation, methodBuilder, field.getName(), clazz);
                 }
             }
 
-            addRecursiveStatement(field, methodBuilder);
+            addRecursiveStatement(clazz, field, methodBuilder);
         }
 
         return generateImplementationType(rule, clazz, implName, methodBuilder.build());
@@ -119,13 +120,19 @@ public class OverrideProcessor {
      * @param field Current Field
      * @param methodBuilder Current method builder
      */
-    private void addRecursiveStatement(Field field, MethodSpec.Builder methodBuilder) {
+    private void addRecursiveStatement(Class<?> clazz, Field field, MethodSpec.Builder methodBuilder) {
         /* Does not add the statement if the field is primitive, primitive wrapper, String or an Enum */
         if (!field.getType().isPrimitive() &&
                 !getWrapperTypes().contains(field.getType()) &&
                 !String.class.isAssignableFrom(field.getType()) &&
                 !field.getType().isEnum()) {
-            methodBuilder.addStatement("$L.$L($L.$L(), $L)", CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, getGetterName(field.getName()), EVAL_PARAMETER);
+            String getter = getGetterName(field.getName());
+            try {
+                clazz.getMethod(getter);
+            } catch (NoSuchMethodException e) {
+                throw new UnsupportedOperationException("A cloak-able class should have a getter defined for all fields. Class: " + clazz.getName() + " Field: " + field.getName());
+            }
+            methodBuilder.addStatement("$L.$L($L.$L(), $L)", CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, getter, EVAL_PARAMETER);
         }
     }
 
@@ -134,14 +141,20 @@ public class OverrideProcessor {
         initializer.addStatement("$L.put($S, new $T())", rule.getName(), clazz.getName(), cloakName);
     }
 
-    private void constructOperation(Rule rule, Class<? extends Annotation> annotationClass, Annotation annotation, MethodSpec.Builder builder, String fieldName) {
+    private void constructOperation(Rule rule, Class<? extends Annotation> annotationClass, Annotation annotation, MethodSpec.Builder builder, String fieldName, Class<?> clazz) {
         List<Object> operands = new ArrayList<>();
 
         CompositeRule baseRule = rule.getValueRule();
         String operation = constructBasicOperation(baseRule, baseRule.getConjunction(), annotationClass, annotation, operands);
 
+        String setter = getSetterName(fieldName);
+        Arrays.stream(clazz.getMethods())
+                .filter(method -> method.getName().equals(setter))
+                .findFirst()
+                .orElseThrow(() -> new UnsupportedOperationException("A cloak-able class should have a setter defined for all fields. Class: " + clazz.getName() + " Field: " + fieldName));
+
         builder.beginControlFlow("if (" + operation + ")", operands.toArray());
-        builder.addStatement("$L.$L(null)", OBJECT_PARAMETER, getSetterName(fieldName));
+        builder.addStatement("$L.$L(null)", OBJECT_PARAMETER, setter);
         builder.endControlFlow();
     }
 
