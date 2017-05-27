@@ -29,6 +29,8 @@ public class Two {
     private Integer l2;
     @IgnoreCloak
     private One one;
+    private Three three;
+    private Four four;
 
     public String getL1() {
         return l1;
@@ -61,5 +63,21 @@ public class Two {
 
     public void setOne(One one) {
         this.one = one;
+    }
+
+    public Three getThree() {
+        return three;
+    }
+
+    public void setThree(Three three) {
+        this.three = three;
+    }
+
+    public Four getFour() {
+        return four;
+    }
+
+    public void setFour(Four four) {
+        this.four = four;
     }
 }

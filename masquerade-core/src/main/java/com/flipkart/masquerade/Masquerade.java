@@ -16,10 +16,7 @@
 
 package com.flipkart.masquerade;
 
-import com.flipkart.masquerade.processor.InterfaceProcessor;
-import com.flipkart.masquerade.processor.OverrideProcessor;
-import com.flipkart.masquerade.processor.ReferenceMapProcessor;
-import com.flipkart.masquerade.processor.RuleObjectProcessor;
+import com.flipkart.masquerade.processor.*;
 import com.flipkart.masquerade.rule.Rule;
 import com.flipkart.masquerade.util.Helper;
 import com.flipkart.masquerade.util.TypeSpecContainer;
@@ -70,24 +67,10 @@ public class Masquerade {
         /* The initialization block which initializes a Map for each Rule and populates it with all the Masks relevant to that Rule */
         CodeBlock.Builder staticCode = CodeBlock.builder();
 
-        /* Initialize all the processors */
-        ReferenceMapProcessor mapProcessor = new ReferenceMapProcessor(configuration, builder);
-        InterfaceProcessor interfaceProcessor = new InterfaceProcessor(configuration, builder);
-        RuleObjectProcessor ruleObjectProcessor = new RuleObjectProcessor(configuration, builder);
+        RuleProcessor ruleProcessor = new RuleProcessor(configuration, builder);
         OverrideProcessor overrideProcessor = new OverrideProcessor(configuration, builder);
 
-        for (Rule rule : configuration.getRules()) {
-            /* Verify if the Rule is constructed properly */
-            Verifier.verifyEvaluationObject(rule);
-            Verifier.verifyAnnotation(rule);
-            Verifier.verifyTypes(rule);
-            /* Creates a Map of Class name and Mask */
-            mapProcessor.addMap(rule);
-            /* Creates an interface for each Rule which is extended by each Mask for that Rule */
-            specs.add(new TypeSpecContainer(configuration.getCloakPackage(), interfaceProcessor.generateInterface(rule)));
-            /* Adds the entry method which takes an Object, resolves and executes an appropriate Mask */
-            ruleObjectProcessor.addEntry(rule);
-        }
+        specs.addAll(ruleProcessor.generateRuleTypeSpecs());
 
         for (ClassPath.ClassInfo info : scannedClasses) {
             Class<?> clazz = Class.forName(info.getName(), true, classLoader);
@@ -99,7 +82,9 @@ public class Masquerade {
 
             for (Rule rule : configuration.getRules()) {
                 /* Generate an implementation class for the Mask interface created earlier */
-                specs.add(new TypeSpecContainer(getImplementationPackage(configuration, clazz), overrideProcessor.createOverride(rule, clazz, staticCode)));
+                /* The override might be absent in case of terminal classes */
+                overrideProcessor.createOverride(rule, clazz, staticCode)
+                        .ifPresent(typeSpec -> specs.add(new TypeSpecContainer(getImplementationPackage(configuration, clazz), typeSpec)));
             }
         }
 

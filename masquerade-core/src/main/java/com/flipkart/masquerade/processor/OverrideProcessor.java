@@ -29,6 +29,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import static com.flipkart.masquerade.util.Helper.*;
 import static com.flipkart.masquerade.util.Strings.*;
@@ -38,17 +39,13 @@ import static com.flipkart.masquerade.util.Strings.*;
  * <p />
  * Created by shrey.garg on 12/05/17.
  */
-public class OverrideProcessor {
-    private final Configuration configuration;
-    private final TypeSpec.Builder cloakBuilder;
-
+public class OverrideProcessor extends BaseOverrideProcessor {
     /**
      * @param configuration Configuration for the current processing cycle
-     * @param cloakBuilder Entry class under construction for the cycle
+     * @param cloakBuilder  Entry class under construction for the cycle
      */
     public OverrideProcessor(Configuration configuration, TypeSpec.Builder cloakBuilder) {
-        this.configuration = configuration;
-        this.cloakBuilder = cloakBuilder;
+        super(configuration, cloakBuilder);
     }
 
     /**
@@ -57,11 +54,7 @@ public class OverrideProcessor {
      * @param initializer The Initialization block in which the map entry for the implementation will be added
      * @return A fully constructed TypeSpec object for the implementation
      */
-    public TypeSpec createOverride(Rule rule, Class<?> clazz, CodeBlock.Builder initializer) {
-        String implName = getImplementationName(rule, clazz);
-
-        addInitializerCode(rule, clazz, initializer, implName);
-
+    public Optional<TypeSpec> createOverride(Rule rule, Class<?> clazz, CodeBlock.Builder initializer) {
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, clazz);
 
         /* Only consider fields for processing that are not static */
@@ -81,38 +74,15 @@ public class OverrideProcessor {
             addRecursiveStatement(clazz, field, methodBuilder);
         }
 
-        return generateImplementationType(rule, clazz, implName, methodBuilder.build());
-    }
+        MethodSpec methodSpec = methodBuilder.build();
+        if (methodSpec.code.isEmpty()) {
+            addNoOpInitializerCode(rule, clazz, initializer);
+            return Optional.empty();
+        }
 
-    /**
-     * @param rule Current Rule
-     * @param clazz Current Class
-     * @return A MethodSpec builder which overrides the interface method
-     */
-    private MethodSpec.Builder generateOverrideMethod(Rule rule, Class<?> clazz) {
-        MethodSpec.Builder methodBuilder = MethodSpec.methodBuilder(INTERFACE_METHOD);
-        methodBuilder.addAnnotation(Override.class);
-        methodBuilder.addModifiers(Modifier.PUBLIC);
-        methodBuilder.addParameter(clazz, OBJECT_PARAMETER);
-        methodBuilder.addParameter(rule.getEvaluatorClass(), EVAL_PARAMETER);
-        methodBuilder.addParameter(getEntryClass(configuration), CLOAK_PARAMETER);
-        return methodBuilder;
-    }
-
-    /**
-     * @param rule Current Rule
-     * @param clazz Current Class
-     * @param implName Name of the implementation class
-     * @param method The overridden method the implementation class
-     * @return Constructed TypeSpec for the implementation class
-     */
-    private TypeSpec generateImplementationType(Rule rule, Class<?> clazz, String implName, MethodSpec method) {
-        TypeSpec.Builder implBuilder = TypeSpec.classBuilder(implName);
-        implBuilder.addModifiers(Modifier.PUBLIC);
-        /* Implements the interface and attaches the current class as a Generic bound */
-        implBuilder.addSuperinterface(ParameterizedTypeName.get(getRuleInterface(configuration, rule), TypeName.get(clazz)));
-        implBuilder.addMethod(method);
-        return implBuilder.build();
+        String implName = getImplementationName(rule, clazz);
+        addInitializerCode(rule, clazz, initializer, implName);
+        return Optional.ofNullable(generateImplementationType(rule, clazz, implName, methodSpec));
     }
 
     /**
@@ -134,6 +104,10 @@ public class OverrideProcessor {
             }
             methodBuilder.addStatement("$L.$L($L.$L(), $L)", CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, getter, EVAL_PARAMETER);
         }
+    }
+
+    private void addNoOpInitializerCode(Rule rule, Class<?> clazz, CodeBlock.Builder initializer) {
+        initializer.addStatement("$L.put($S, $L)", rule.getName(), clazz.getName(), getNoOpVariableName(rule));
     }
 
     private void addInitializerCode(Rule rule, Class<?> clazz, CodeBlock.Builder initializer, String implName) {

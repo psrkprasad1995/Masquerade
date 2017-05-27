@@ -73,7 +73,19 @@ public class Helper {
     }
 
     public static String getImplementationName(Rule rule, Class<?> clazz) {
-        return clazz.getSimpleName() + rule.getName() + INTERFACE_SUFFIX;
+        return generateImplementationName(rule, clazz.getSimpleName());
+    }
+
+    public static String getNoOpImplementationName(Rule rule) {
+        return generateImplementationName(rule, "NoOp");
+    }
+
+    public static ClassName getNoOpImplementationClass(Configuration configuration, Rule rule) {
+        return ClassName.get(configuration.getCloakPackage(), getNoOpImplementationName(rule));
+    }
+
+    private static String generateImplementationName(Rule rule, String prefix) {
+        return prefix + rule.getName() + INTERFACE_SUFFIX;
     }
 
     public static String getImplementationPackage(Configuration configuration, Class<?> clazz) {
@@ -82,6 +94,10 @@ public class Helper {
 
     public static ClassName getEntryClass(Configuration configuration) {
         return ClassName.get(configuration.getCloakPackage(), ENTRY_CLASS);
+    }
+
+    public static String getNoOpVariableName(Rule rule) {
+        return "noOp" + rule.getName();
     }
 
     public static Set<ClassPath.ClassInfo> getPackageClasses(ClassLoader classLoader, List<String> packagesToScan) throws IOException {
