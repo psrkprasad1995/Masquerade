@@ -20,17 +20,9 @@ package com.flipkart.masquerade.test;
  * Created by shrey.garg on 25/04/17.
  */
 public class Eval {
-    private Platform platform;
+    public Platform platform;
     private int version;
     private String client;
-
-    public Platform getPlatform() {
-        return platform;
-    }
-
-    public void setPlatform(Platform platform) {
-        this.platform = platform;
-    }
 
     public int getVersion() {
         return version;

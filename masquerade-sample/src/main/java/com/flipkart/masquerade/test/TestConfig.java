@@ -36,7 +36,7 @@ public class TestConfig implements Configuration {
                 ValidationAnnotation.class,
                 Eval.class,
                 new CompositeRule(
-                        new BasicRule("name", Operator.EQUAL, "getPlatform()"),
+                        new BasicRule("name", Operator.EQUAL, "platform"),
                         new CompositeRule(Conjunction.OR,
                                 new BasicRule("since", Operator.LESSER, "getVersion()"),
                                 new BasicRule("till", Operator.GREATER, "getVersion()")

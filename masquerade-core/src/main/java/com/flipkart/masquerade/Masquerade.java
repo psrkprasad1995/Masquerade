@@ -21,7 +21,9 @@ import com.flipkart.masquerade.processor.OverrideProcessor;
 import com.flipkart.masquerade.processor.ReferenceMapProcessor;
 import com.flipkart.masquerade.processor.RuleObjectProcessor;
 import com.flipkart.masquerade.rule.Rule;
+import com.flipkart.masquerade.util.Helper;
 import com.flipkart.masquerade.util.TypeSpecContainer;
+import com.flipkart.masquerade.util.Verifier;
 import com.google.common.reflect.ClassPath;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.CodeBlock;
@@ -75,6 +77,10 @@ public class Masquerade {
         OverrideProcessor overrideProcessor = new OverrideProcessor(configuration, builder);
 
         for (Rule rule : configuration.getRules()) {
+            /* Verify if the Rule is constructed properly */
+            Verifier.verifyEvaluationObject(rule);
+            Verifier.verifyAnnotation(rule);
+            Verifier.verifyTypes(rule);
             /* Creates a Map of Class name and Mask */
             mapProcessor.addMap(rule);
             /* Creates an interface for each Rule which is extended by each Mask for that Rule */
