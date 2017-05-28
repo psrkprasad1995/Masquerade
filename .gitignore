@@ -1,0 +1,12 @@
+.DS_Store
+.idea/
+*.iml
+*.ipr
+*.iws
+*.log
+.classpath
+target/
+out/
+exportToHTML/
+.settings/
+masquerade-sample/src/main/java/org/
