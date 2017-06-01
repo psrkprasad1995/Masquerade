@@ -9,4 +9,4 @@ target/
 out/
 exportToHTML/
 .settings/
-masquerade-sample/src/main/java/org/
+masquerade-sample/src/main/java/generated/org/
