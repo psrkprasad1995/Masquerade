@@ -49,19 +49,15 @@ public class Masque extends AbstractMojo {
     @Parameter(required = true)
     private String configurationClass;
 
-    @Parameter(required = true)
+    @Parameter
     private File targetFile;
 
     @Parameter(defaultValue = "${project}", required = true, readonly = true)
     private MavenProject project;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
-        if (!targetFile.isDirectory()) {
-            throw new MojoExecutionException("Please specify a directory as target");
-        }
-
-        for (File file : targetFile.listFiles()) {
-            this.deleteFiles(file);
+        if (targetFile == null) {
+            targetFile = new File(project.getBuild().getDirectory() + "/generated-sources");
         }
 
         addProjectDependenciesToClasspath();
@@ -124,14 +120,4 @@ public class Masque extends AbstractMojo {
         });
 
     }
-
-    private void deleteFiles(File file) {
-        if (file.isDirectory()) {
-            for (File file1 : file.listFiles()) {
-                this.deleteFiles(file1);
-            }
-        }
-        file.delete();
-    }
-
 }

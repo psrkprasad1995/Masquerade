@@ -20,7 +20,7 @@ import com.flipkart.masquerade.test.actual.One;
 import com.flipkart.masquerade.test.actual.Two;
 import com.flipkart.masquerade.test.actual.Wrapper;
 import org.junit.jupiter.api.Test;
-import generated.org.test.veils.Cloak;
+import org.test.veils.Cloak;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
