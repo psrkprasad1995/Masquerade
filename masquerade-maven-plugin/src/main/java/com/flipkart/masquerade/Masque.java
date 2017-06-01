@@ -33,6 +33,7 @@ import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -55,19 +56,33 @@ public class Masque extends AbstractMojo {
     private MavenProject project;
 
     public void execute() throws MojoExecutionException, MojoFailureException {
+        if (!targetFile.isDirectory()) {
+            throw new MojoExecutionException("Please specify a directory as target");
+        }
+
+        for (File file : targetFile.listFiles()) {
+            this.deleteFiles(file);
+        }
+
         addProjectDependenciesToClasspath();
         getLog().info("Fetching Configuration from " + configurationClass);
 
         final String classInput = configurationClass;
+        Configuration configuration;
         try {
             Class<Configuration> configurationClass = (Class<Configuration>) Class.forName(classInput, true, Thread.currentThread().getContextClassLoader());
-            Configuration configuration = configurationClass.newInstance();
-
+            configuration = configurationClass.newInstance();
             getLog().info("Configuration instance created.");
-            Masquerade.initialize(configuration, Thread.currentThread().getContextClassLoader(), targetFile);
         } catch (Exception e) {
             throw new MojoExecutionException("Wrong configuration class", e);
         }
+
+        try {
+            Masquerade.initialize(configuration, Thread.currentThread().getContextClassLoader(), targetFile);
+        } catch (Exception e) {
+            throw new MojoExecutionException("Error while creating masks", e);
+        }
+
         getLog().info("Masquerade is open for invites.");
     }
 
@@ -108,6 +123,15 @@ public class Masque extends AbstractMojo {
             }
         });
 
+    }
+
+    private void deleteFiles(File file) {
+        if (file.isDirectory()) {
+            for (File file1 : file.listFiles()) {
+                this.deleteFiles(file1);
+            }
+        }
+        file.delete();
     }
 
 }
