@@ -79,6 +79,8 @@ public class Masque extends AbstractMojo {
             throw new MojoExecutionException("Error while creating masks", e);
         }
 
+        project.addCompileSourceRoot(targetFile.getPath());
+        getLog().info("Added path to sources: " + targetFile.getPath());
         getLog().info("Masquerade is open for invites.");
     }
 
