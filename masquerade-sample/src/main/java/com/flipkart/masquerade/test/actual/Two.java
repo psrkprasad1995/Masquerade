@@ -17,6 +17,7 @@
 package com.flipkart.masquerade.test.actual;
 
 import com.flipkart.masquerade.annotation.IgnoreCloak;
+import com.flipkart.masquerade.test.Fruit;
 import com.flipkart.masquerade.test.Platform;
 import com.flipkart.masquerade.test.ValidationAnnotation;
 
@@ -33,6 +34,7 @@ public class Two {
     private Four four;
     private boolean primitiveBoolean;
     private Boolean wrapperBoolean;
+    private Fruit fruit = Fruit.APPLE;
 
     public String getL1() {
         return l1;
@@ -97,5 +99,13 @@ public class Two {
 
     public void setWrapperBoolean(Boolean wrapperBoolean) {
         this.wrapperBoolean = wrapperBoolean;
+    }
+
+    public Fruit getFruit() {
+        return fruit;
+    }
+
+    public void setFruit(Fruit fruit) {
+        this.fruit = fruit;
     }
 }

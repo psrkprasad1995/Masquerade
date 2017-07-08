@@ -93,8 +93,16 @@ public class Helper {
         return generateImplementationName(rule, "NoOp");
     }
 
+    public static String getEnumImplementationName(Rule rule) {
+        return generateImplementationName(rule, "Enum");
+    }
+
     public static ClassName getNoOpImplementationClass(Configuration configuration, Rule rule) {
         return ClassName.get(configuration.getCloakPackage(), getNoOpImplementationName(rule));
+    }
+
+    public static ClassName getEnumImplementationClass(Configuration configuration, Rule rule) {
+        return ClassName.get(configuration.getCloakPackage(), getEnumImplementationName(rule));
     }
 
     private static String generateImplementationName(Rule rule, String prefix) {
@@ -111,6 +119,10 @@ public class Helper {
 
     public static String getNoOpVariableName(Rule rule) {
         return "noOp" + rule.getName();
+    }
+
+    public static String getEnumVariableName(Rule rule) {
+        return "enum" + rule.getName();
     }
 
     public static Set<ClassPath.ClassInfo> getPackageClasses(ClassLoader classLoader, List<String> packagesToScan) throws IOException {

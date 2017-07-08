@@ -18,7 +18,6 @@ package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.rule.Rule;
-import com.flipkart.masquerade.util.Helper;
 import com.flipkart.masquerade.util.TypeSpecContainer;
 import com.flipkart.masquerade.util.Verifier;
 import com.squareup.javapoet.FieldSpec;
@@ -56,6 +55,7 @@ public class RuleProcessor {
         InterfaceProcessor interfaceProcessor = new InterfaceProcessor(configuration, cloakBuilder);
         RuleObjectProcessor ruleObjectProcessor = new RuleObjectProcessor(configuration, cloakBuilder);
         NoOpOverrideProcessor noOpOverrideProcessor = new NoOpOverrideProcessor(configuration, cloakBuilder);
+        EnumOverrideProcessor enumOverrideProcessor = new EnumOverrideProcessor(configuration, cloakBuilder);
 
         for (Rule rule : configuration.getRules()) {
             /* Verify if the Rule is constructed properly */
@@ -70,10 +70,15 @@ public class RuleProcessor {
             ruleObjectProcessor.addEntry(rule);
             /* Creates a NoOp implementation for each Rule which can be used for terminal classes */
             specs.add(new TypeSpecContainer(configuration.getCloakPackage(), noOpOverrideProcessor.createOverride(rule)));
+            /* Creates a Enum implementation for each Rule which can be used for enums */
+            specs.add(new TypeSpecContainer(configuration.getCloakPackage(), enumOverrideProcessor.createOverride(rule)));
             /* Create a NoOP Mask field */
             FieldSpec fieldSpec = FieldSpec.builder(getRuleInterface(configuration, rule), getNoOpVariableName(rule), Modifier.PRIVATE)
                     .initializer("new $T()", getNoOpImplementationClass(configuration, rule)).build();
             cloakBuilder.addField(fieldSpec);
+            FieldSpec enumFieldSpec = FieldSpec.builder(getRuleInterface(configuration, rule), getEnumVariableName(rule), Modifier.PRIVATE)
+                    .initializer("new $T()", getEnumImplementationClass(configuration, rule)).build();
+            cloakBuilder.addField(enumFieldSpec);
         }
 
         return specs;

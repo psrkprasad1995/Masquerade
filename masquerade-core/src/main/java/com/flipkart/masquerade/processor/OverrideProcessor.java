@@ -20,9 +20,11 @@ import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.annotation.IgnoreCloak;
 import com.flipkart.masquerade.rule.*;
 import com.flipkart.masquerade.util.FieldDescriptor;
-import com.squareup.javapoet.*;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeSpec;
 
-import javax.lang.model.element.Modifier;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -85,7 +87,7 @@ public class OverrideProcessor extends BaseOverrideProcessor {
                 }
             }
 
-            addRecursiveStatement(clazz, field, methodBuilder);
+            addRecursiveStatement(rule, clazz, field, methodBuilder, initializer);
             if (++processed != actualSize && configuration.isNativeSerializationEnabled()) {
                 methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
             }
@@ -112,7 +114,7 @@ public class OverrideProcessor extends BaseOverrideProcessor {
      * @param field Current Field
      * @param methodBuilder Current method builder
      */
-    private void addRecursiveStatement(Class<?> clazz, Field field, MethodSpec.Builder methodBuilder) {
+    private void addRecursiveStatement(Rule rule, Class<?> clazz, Field field, MethodSpec.Builder methodBuilder, CodeBlock.Builder initializer) {
         /* Does not add the statement if the field is primitive, primitive wrapper, String or an Enum */
         if ((!field.getType().isPrimitive() &&
                 !getWrapperTypes().contains(field.getType()) &&
@@ -125,6 +127,10 @@ public class OverrideProcessor extends BaseOverrideProcessor {
                 throw new UnsupportedOperationException("A cloak-able class should have a getter defined for all fields. Class: " + clazz.getName() + " Field: " + field.getName());
             }
 
+            if (field.getType().isEnum()) {
+                addEnumInitializerCode(rule, field.getType(), initializer);
+            }
+
             if (configuration.isNativeSerializationEnabled()) {
                 methodBuilder.addStatement("$L.append($L.$L($L.$L(), $L))", SERIALIZED_OBJECT, CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, getter, EVAL_PARAMETER);
             } else {
@@ -135,6 +141,10 @@ public class OverrideProcessor extends BaseOverrideProcessor {
 
     private void addNoOpInitializerCode(Rule rule, Class<?> clazz, CodeBlock.Builder initializer) {
         initializer.addStatement("$L.put($S, $L)", rule.getName(), clazz.getName(), getNoOpVariableName(rule));
+    }
+
+    private void addEnumInitializerCode(Rule rule, Class<?> clazz, CodeBlock.Builder initializer) {
+        initializer.addStatement("$L.put($S, $L)", rule.getName(), clazz.getName(), getEnumVariableName(rule));
     }
 
     private void addInitializerCode(Rule rule, Class<?> clazz, CodeBlock.Builder initializer, String implName) {
