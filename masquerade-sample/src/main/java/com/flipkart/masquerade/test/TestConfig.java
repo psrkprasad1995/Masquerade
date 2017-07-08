@@ -61,4 +61,9 @@ public class TestConfig implements Configuration {
     public String getCloakPackage() {
         return "org.test.veils";
     }
+
+    @Override
+    public boolean isNativeSerializationEnabled() {
+        return true;
+    }
 }

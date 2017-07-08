@@ -62,7 +62,11 @@ public class RuleObjectProcessor {
 
         /* If a null Object is passed, return immediately */
         objectMaskBuilder.beginControlFlow("if ($L == null)", OBJECT_PARAMETER);
-        objectMaskBuilder.addStatement("return");
+        if (configuration.isNativeSerializationEnabled()) {
+            objectMaskBuilder.addStatement("return null");
+        } else {
+            objectMaskBuilder.addStatement("return");
+        }
         objectMaskBuilder.endControlFlow();
 
         /* Fetch the Mask implementation object from Map and assign it to an interface reference for the Rule */
@@ -75,7 +79,12 @@ public class RuleObjectProcessor {
         /* Check if the retrieved Object is present */
         objectMaskBuilder.beginControlFlow("if ($L != null)", MASKER_VARIABLE);
         /* If it is, then call the mask method for the Object */
-        objectMaskBuilder.addStatement("$L.$L($L, $L, this)", MASKER_VARIABLE, INTERFACE_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
+        if (configuration.isNativeSerializationEnabled()) {
+            objectMaskBuilder.addStatement("return $L.$L($L, $L, this)", MASKER_VARIABLE, INTERFACE_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
+        } else {
+            objectMaskBuilder.addStatement("$L.$L($L, $L, this)", MASKER_VARIABLE, INTERFACE_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
+        }
+
         objectMaskBuilder.nextControlFlow("else");
         /* Otherwise, check if the Object is an instance of Map */
         objectMaskBuilder.beginControlFlow("if ($L instanceof $T)", OBJECT_PARAMETER, Map.class);
@@ -98,6 +107,11 @@ public class RuleObjectProcessor {
         objectMaskBuilder.endControlFlow();
         objectMaskBuilder.endControlFlow();
         objectMaskBuilder.endControlFlow();
+
+        if (configuration.isNativeSerializationEnabled()) {
+            objectMaskBuilder.returns(String.class);
+            objectMaskBuilder.addStatement("return null");
+        }
 
         cloakBuilder.addMethod(objectMaskBuilder.build());
     }

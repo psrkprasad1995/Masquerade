@@ -22,6 +22,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
 import static com.flipkart.masquerade.util.Helper.getNoOpImplementationName;
+import static com.flipkart.masquerade.util.Strings.OBJECT_PARAMETER;
 
 /**
  * Processor that creates a No-Op implementation class for a Mask interface
@@ -44,6 +45,15 @@ public class NoOpOverrideProcessor extends BaseOverrideProcessor {
     public TypeSpec createOverride(Rule rule) {
         String implName = getNoOpImplementationName(rule);
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, Object.class);
+
+        if (configuration.isNativeSerializationEnabled()) {
+            methodBuilder.beginControlFlow("if ($L instanceof String)", OBJECT_PARAMETER);
+            methodBuilder.addStatement("return $S + $L + $S", "\"", OBJECT_PARAMETER, "\"");
+            methodBuilder.endControlFlow();
+
+            methodBuilder.addStatement("return String.valueOf($L)", OBJECT_PARAMETER);
+        }
+
         return generateImplementationType(rule, Object.class, implName, methodBuilder.build());
     }
 }

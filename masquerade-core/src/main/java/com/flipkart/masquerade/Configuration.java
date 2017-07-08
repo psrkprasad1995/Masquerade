@@ -28,4 +28,5 @@ public interface Configuration {
     List<String> getPackagesToScan();
     Set<Rule> getRules();
     String getCloakPackage();
+    boolean isNativeSerializationEnabled();
 }

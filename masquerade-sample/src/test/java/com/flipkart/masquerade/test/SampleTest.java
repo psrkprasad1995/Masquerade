@@ -22,6 +22,7 @@ import com.flipkart.masquerade.test.actual.Wrapper;
 import org.junit.jupiter.api.Test;
 import org.test.veils.Cloak;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
@@ -43,8 +44,9 @@ public class SampleTest {
         eval.setVersion(5);
 
         assertNotNull(one.getT2());
-        cloak.hide(one, eval);
+        String serialized = cloak.hide(one, eval);
         assertNull(one.getT2());
+        assertEquals("{\"t1\":\"something\",\"t2\":null,\"two\":null}", serialized);
     }
 
     @Test
@@ -61,8 +63,9 @@ public class SampleTest {
         eval.setVersion(5);
 
         assertNotNull(one.getT2());
-        cloak.hide(one, eval);
+        String serialized = cloak.hide(one, eval);
         assertNotNull(one.getT2());
+        assertEquals("{\"t1\":\"something\",\"t2\":2,\"two\":null}", serialized);
     }
 
     @Test
@@ -82,8 +85,9 @@ public class SampleTest {
         eval.setVersion(5);
 
         assertNotNull(one.getT2());
-        cloak.hide(wrapper, eval);
+        String serialized = cloak.hide(wrapper, eval);
         assertNull(one.getT2());
+        assertEquals("{\"response\":{\"t1\":\"something\",\"t2\":null,\"two\":null}}", serialized);
     }
 
     @Test
@@ -109,9 +113,10 @@ public class SampleTest {
         assertNotNull(one.getT2());
         assertNotNull(two.getL1());
 
-        cloak.hide(one, eval);
+        String serialized = cloak.hide(one, eval);
 
         assertNull(one.getT2());
         assertNull(two.getL1());
+        assertEquals("{\"t1\":\"something\",\"t2\":null,\"two\":{\"l1\":null,\"l2\":7,\"three\":null,\"four\":null}}", serialized);
     }
 }

@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.flipkart.masquerade.util.Helper.*;
 import static com.flipkart.masquerade.util.Strings.*;
@@ -57,10 +58,23 @@ public class OverrideProcessor extends BaseOverrideProcessor {
     public Optional<TypeSpec> createOverride(Rule rule, Class<?> clazz, CodeBlock.Builder initializer) {
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, clazz);
 
+        if (configuration.isNativeSerializationEnabled()) {
+            methodBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "{");
+        }
+
+        List<Field> nonStaticFields = getNonStaticFields(clazz).stream().filter(field -> !field.isAnnotationPresent(IgnoreCloak.class)).collect(Collectors.toList());
+        int actualSize = nonStaticFields.size();
+        int processed = 0;
         /* Only consider fields for processing that are not static */
-        for (Field field : getNonStaticFields(clazz)) {
-            if (field.getType().isPrimitive() || field.isAnnotationPresent(IgnoreCloak.class)) {
-                continue;
+        for (Field field : nonStaticFields) {
+            if (field.getType().isPrimitive()) {
+                if (!configuration.isNativeSerializationEnabled()) {
+                    continue;
+                }
+            }
+
+            if (configuration.isNativeSerializationEnabled()) {
+                methodBuilder.addStatement("$L.append($S).append($S).append($S).append($S)", SERIALIZED_OBJECT, QUOTES, field.getName(), QUOTES, ":");
             }
 
             Class<? extends Annotation> annotationClass = rule.getAnnotationClass();
@@ -72,6 +86,14 @@ public class OverrideProcessor extends BaseOverrideProcessor {
             }
 
             addRecursiveStatement(clazz, field, methodBuilder);
+            if (++processed != actualSize) {
+                methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
+            }
+        }
+
+        if (configuration.isNativeSerializationEnabled()) {
+            methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "}");
+            methodBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
         }
 
         MethodSpec methodSpec = methodBuilder.build();
@@ -92,17 +114,22 @@ public class OverrideProcessor extends BaseOverrideProcessor {
      */
     private void addRecursiveStatement(Class<?> clazz, Field field, MethodSpec.Builder methodBuilder) {
         /* Does not add the statement if the field is primitive, primitive wrapper, String or an Enum */
-        if (!field.getType().isPrimitive() &&
+        if ((!field.getType().isPrimitive() &&
                 !getWrapperTypes().contains(field.getType()) &&
                 !String.class.isAssignableFrom(field.getType()) &&
-                !field.getType().isEnum()) {
+                !field.getType().isEnum()) || configuration.isNativeSerializationEnabled()) {
             String getter = getGetterName(field.getName());
             try {
                 clazz.getMethod(getter);
             } catch (NoSuchMethodException e) {
                 throw new UnsupportedOperationException("A cloak-able class should have a getter defined for all fields. Class: " + clazz.getName() + " Field: " + field.getName());
             }
-            methodBuilder.addStatement("$L.$L($L.$L(), $L)", CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, getter, EVAL_PARAMETER);
+
+            if (configuration.isNativeSerializationEnabled()) {
+                methodBuilder.addStatement("$L.append($L.$L($L.$L(), $L))", SERIALIZED_OBJECT, CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, getter, EVAL_PARAMETER);
+            } else {
+                methodBuilder.addStatement("$L.$L($L.$L(), $L)", CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, getter, EVAL_PARAMETER);
+            }
         }
     }
 

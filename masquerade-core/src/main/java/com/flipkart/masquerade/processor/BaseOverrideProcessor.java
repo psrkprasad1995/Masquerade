@@ -57,6 +57,11 @@ public abstract class BaseOverrideProcessor {
         methodBuilder.addParameter(clazz, OBJECT_PARAMETER);
         methodBuilder.addParameter(rule.getEvaluatorClass(), EVAL_PARAMETER);
         methodBuilder.addParameter(getEntryClass(configuration), CLOAK_PARAMETER);
+
+        if (configuration.isNativeSerializationEnabled()) {
+            methodBuilder.returns(String.class);
+        }
+
         return methodBuilder;
     }
 

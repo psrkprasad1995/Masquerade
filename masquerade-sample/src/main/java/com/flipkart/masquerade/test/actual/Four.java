@@ -4,22 +4,22 @@ package com.flipkart.masquerade.test.actual;
  * Created by shrey.garg on 27/05/17.
  */
 public class Four {
-    private double aDouble;
-    private Double bDouble;
+    private double aaDouble;
+    private Double bbDouble;
 
-    public double getaDouble() {
-        return aDouble;
+    public double getAaDouble() {
+        return aaDouble;
     }
 
-    public void setaDouble(double aDouble) {
-        this.aDouble = aDouble;
+    public void setAaDouble(double aaDouble) {
+        this.aaDouble = aaDouble;
     }
 
-    public Double getbDouble() {
-        return bDouble;
+    public Double getBbDouble() {
+        return bbDouble;
     }
 
-    public void setbDouble(Double bDouble) {
-        this.bDouble = bDouble;
+    public void setBbDouble(Double bbDouble) {
+        this.bbDouble = bbDouble;
     }
 }
