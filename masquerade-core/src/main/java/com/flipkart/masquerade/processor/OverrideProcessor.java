@@ -86,7 +86,7 @@ public class OverrideProcessor extends BaseOverrideProcessor {
             }
 
             addRecursiveStatement(clazz, field, methodBuilder);
-            if (++processed != actualSize) {
+            if (++processed != actualSize && configuration.isNativeSerializationEnabled()) {
                 methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
             }
         }
