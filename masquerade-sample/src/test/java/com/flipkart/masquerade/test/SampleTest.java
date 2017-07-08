@@ -16,11 +16,15 @@
 
 package com.flipkart.masquerade.test;
 
-import com.flipkart.masquerade.test.actual.One;
-import com.flipkart.masquerade.test.actual.Two;
-import com.flipkart.masquerade.test.actual.Wrapper;
+import com.flipkart.masquerade.test.actual.*;
+import com.flipkart.masquerade.test.actual.collections.CollectOne;
+import com.flipkart.masquerade.test.actual.collections.CollectThree;
+import com.flipkart.masquerade.test.actual.collections.CollectTwo;
 import org.junit.jupiter.api.Test;
 import org.test.veils.Cloak;
+
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -118,5 +122,41 @@ public class SampleTest {
         assertNull(one.getT2());
         assertNull(two.getL1());
         assertEquals("{\"t1\":\"something\",\"t2\":null,\"two\":{\"l1\":null,\"l2\":7,\"three\":null,\"four\":null,\"primitiveBoolean\":false,\"wrapperBoolean\":null,\"fruit\":\"APPLE\"}}", serialized);
+    }
+
+    @Test
+    public void testCollectionCloaking() throws Exception {
+        Cloak cloak = new Cloak();
+
+        CollectThree collectThree = new CollectThree();
+        collectThree.setId(2);
+
+        Three three1 = new Three(2, 53.125);
+        Three three2 = new Three(624, 212.63);
+        collectThree.setThrees(Arrays.asList(three1, three2));
+
+        CollectOne collectOne = new CollectOne();
+        collectOne.setCollectTwo(collectThree);
+
+        Four four1 = new Four(1232.12324, 423.61);
+        Four four2 = new Four(2643.12, 6943.255);
+        Four four3 = new Four(4124.63, 90123.23);
+        collectOne.setFours(Arrays.asList(four1, four2, four3));
+
+        Eval eval = new Eval();
+        eval.platform = Platform.MOBILE_WEB;
+        eval.setVersion(1);
+
+        assertNotNull(four1.getBbDouble());
+        assertNotNull(four2.getBbDouble());
+        assertNotNull(four3.getBbDouble());
+
+        String serialized = cloak.hide(collectOne, eval);
+
+        assertNull(four1.getBbDouble());
+        assertNull(four2.getBbDouble());
+        assertNull(four3.getBbDouble());
+
+        assertEquals("{\"fours\":[{\"aaDouble\":1232.12324,\"bbDouble\":null},{\"aaDouble\":2643.12,\"bbDouble\":null},{\"aaDouble\":4124.63,\"bbDouble\":null}],\"collectTwo\":{\"threes\":[{\"a\":2,\"b\":53.125},{\"a\":624,\"b\":212.63}],\"id\":2}}", serialized);
     }
 }

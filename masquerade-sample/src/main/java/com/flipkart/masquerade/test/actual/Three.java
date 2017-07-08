@@ -7,6 +7,14 @@ public class Three {
     private int a;
     private double b;
 
+    public Three() {
+    }
+
+    public Three(int a, double b) {
+        this.a = a;
+        this.b = b;
+    }
+
     public int getA() {
         return a;
     }
