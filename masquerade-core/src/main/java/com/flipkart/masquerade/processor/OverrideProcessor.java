@@ -118,7 +118,7 @@ public class OverrideProcessor extends BaseOverrideProcessor {
                 !getWrapperTypes().contains(field.getType()) &&
                 !String.class.isAssignableFrom(field.getType()) &&
                 !field.getType().isEnum()) || configuration.isNativeSerializationEnabled()) {
-            String getter = getGetterName(field.getName());
+            String getter = getGetterName(field.getName(), field.getType().equals(Boolean.TYPE), field.getType().isPrimitive());
             try {
                 clazz.getMethod(getter);
             } catch (NoSuchMethodException e) {

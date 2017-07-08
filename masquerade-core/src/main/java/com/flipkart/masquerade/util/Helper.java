@@ -40,9 +40,22 @@ public class Helper {
         return prefix + capitalizedName;
     }
 
-    public static String getGetterName(String name) {
+    public static String getGetterName(String name, boolean isBoolean, boolean isPrimitive) {
         String capitalizedName = capitalize(name);
         String prefix = "get";
+
+        if (isBoolean) {
+            if (capitalizedName.startsWith("Is")) {
+                if (capitalizedName.length() > 2 && Character.isUpperCase(capitalizedName.charAt(2))) {
+                    capitalizedName = capitalizedName.substring(2);
+                }
+            }
+
+            if (isPrimitive) {
+                prefix = "is";
+            }
+        }
+
         return prefix + capitalizedName;
     }
 

@@ -117,6 +117,6 @@ public class SampleTest {
 
         assertNull(one.getT2());
         assertNull(two.getL1());
-        assertEquals("{\"t1\":\"something\",\"t2\":null,\"two\":{\"l1\":null,\"l2\":7,\"three\":null,\"four\":null}}", serialized);
+        assertEquals("{\"t1\":\"something\",\"t2\":null,\"two\":{\"l1\":null,\"l2\":7,\"three\":null,\"four\":null,\"primitiveBoolean\":false,\"wrapperBoolean\":null}}", serialized);
     }
 }

@@ -31,6 +31,8 @@ public class Two {
     private One one;
     private Three three;
     private Four four;
+    private boolean primitiveBoolean;
+    private Boolean wrapperBoolean;
 
     public String getL1() {
         return l1;
@@ -79,5 +81,21 @@ public class Two {
 
     public void setFour(Four four) {
         this.four = four;
+    }
+
+    public boolean isPrimitiveBoolean() {
+        return primitiveBoolean;
+    }
+
+    public void setPrimitiveBoolean(boolean primitiveBoolean) {
+        this.primitiveBoolean = primitiveBoolean;
+    }
+
+    public Boolean getWrapperBoolean() {
+        return wrapperBoolean;
+    }
+
+    public void setWrapperBoolean(Boolean wrapperBoolean) {
+        this.wrapperBoolean = wrapperBoolean;
     }
 }
