@@ -116,10 +116,25 @@ public class RuleObjectProcessor {
         /* If it's not a Collection, then check if the Object is an array */
         objectMaskBuilder.nextControlFlow("else if ($L instanceof Object[])", OBJECT_PARAMETER);
         /* If it is, then iterate over the array */
+        if (configuration.isNativeSerializationEnabled()) {
+            objectMaskBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "[");
+        }
         objectMaskBuilder.beginControlFlow("for (Object o : ((Object[]) $L))", OBJECT_PARAMETER);
         /* And recursively call this entry method for each object */
-        objectMaskBuilder.addStatement("this.$L(o, $L)", ENTRY_METHOD, EVAL_PARAMETER);
+        if (configuration.isNativeSerializationEnabled()) {
+            objectMaskBuilder.addStatement("$L.append(this.$L(o, $L))", SERIALIZED_OBJECT, ENTRY_METHOD, EVAL_PARAMETER);
+            objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
+        } else {
+            objectMaskBuilder.addStatement("this.$L(o, $L)", ENTRY_METHOD, EVAL_PARAMETER);
+        }
         objectMaskBuilder.endControlFlow();
+        if (configuration.isNativeSerializationEnabled()) {
+            objectMaskBuilder.beginControlFlow("if ($L.length() > 0)", SERIALIZED_OBJECT);
+            objectMaskBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
+            objectMaskBuilder.endControlFlow();
+            objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
+            objectMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
+        }
         objectMaskBuilder.endControlFlow();
         objectMaskBuilder.endControlFlow();
 

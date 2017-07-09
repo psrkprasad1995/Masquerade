@@ -18,19 +18,17 @@ package com.flipkart.masquerade.test.actual.collections;
 
 import com.flipkart.masquerade.test.actual.Three;
 
-import java.util.List;
-
 /**
  * Created by shrey.garg on 09/07/17.
  */
 public class CollectThree extends CollectTwo {
-    private List<Three> threes;
+    private Three[] threes;
 
-    public List<Three> getThrees() {
+    public Three[] getThrees() {
         return threes;
     }
 
-    public void setThrees(List<Three> threes) {
+    public void setThrees(Three[] threes) {
         this.threes = threes;
     }
 }

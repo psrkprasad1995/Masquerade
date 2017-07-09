@@ -133,7 +133,7 @@ public class SampleTest {
 
         Three three1 = new Three(2, 53.125);
         Three three2 = new Three(624, 212.63);
-        collectThree.setThrees(Arrays.asList(three1, three2));
+        collectThree.setThrees(new Three[]{ three1, three2 });
 
         CollectOne collectOne = new CollectOne();
         collectOne.setCollectTwo(collectThree);
