@@ -20,11 +20,15 @@ import com.flipkart.masquerade.test.actual.*;
 import com.flipkart.masquerade.test.actual.collections.CollectOne;
 import com.flipkart.masquerade.test.actual.collections.CollectThree;
 import com.flipkart.masquerade.test.actual.collections.CollectTwo;
+import com.flipkart.masquerade.test.actual.maps.MapOne;
+import com.flipkart.masquerade.test.actual.maps.MapTwo;
 import org.junit.jupiter.api.Test;
 import org.test.veils.Cloak;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -158,5 +162,47 @@ public class SampleTest {
         assertNull(four3.getBbDouble());
 
         assertEquals("{\"fours\":[{\"aaDouble\":1232.12324,\"bbDouble\":null},{\"aaDouble\":2643.12,\"bbDouble\":null},{\"aaDouble\":4124.63,\"bbDouble\":null}],\"collectTwo\":{\"threes\":[{\"a\":2,\"b\":53.125},{\"a\":624,\"b\":212.63}],\"id\":2}}", serialized);
+    }
+
+    @Test
+    public void testMapCloaking() throws Exception {
+        Cloak cloak = new Cloak();
+
+        Map<String, Object> objectMap = new HashMap<>();
+        objectMap.put("b", 43.63);
+        objectMap.put("a", false);
+        objectMap.put("d", "Jack");
+        objectMap.put("c", new Three(4, 621.1));
+
+        MapTwo mapTwo = new MapTwo();
+        mapTwo.setTbm("Jill");
+        mapTwo.setObjectMap(objectMap);
+
+        MapTwo mapTwo1 = new MapTwo();
+        mapTwo1.setTbm("Went");
+        mapTwo1.setObjectMap(new HashMap<>());
+
+        Map<String, MapTwo> mapTwoMap = new HashMap<>();
+        mapTwoMap.put("1", mapTwo);
+        mapTwoMap.put("2", mapTwo1);
+
+        MapOne mapOne = new MapOne();
+        mapOne.setAbc("xyz");
+        mapOne.setSomeBoolean(true);
+        mapOne.setMapTwoMap(mapTwoMap);
+
+        Eval eval = new Eval();
+        eval.platform = Platform.ANDROID;
+        eval.setVersion(12);
+
+        assertNotNull(mapTwo.getTbm());
+        assertNotNull(mapTwo1.getTbm());
+
+        String serialized = cloak.hide(mapOne, eval);
+
+        assertNull(mapTwo.getTbm());
+        assertNull(mapTwo1.getTbm());
+
+        assertEquals("{\"abc\":\"xyz\",\"someBoolean\":true,\"mapTwoMap\":{\"1\":{\"tbm\":null,\"objectMap\":{\"a\":false,\"b\":43.63,\"c\":{\"a\":4,\"b\":621.1},\"d\":\"Jack\"}},\"2\":{\"tbm\":null,\"objectMap\":{}}}}", serialized);
     }
 }

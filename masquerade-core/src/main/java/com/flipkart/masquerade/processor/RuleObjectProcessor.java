@@ -89,7 +89,21 @@ public class RuleObjectProcessor {
         /* Otherwise, check if the Object is an instance of Map */
         objectMaskBuilder.beginControlFlow("if ($L instanceof $T)", OBJECT_PARAMETER, Map.class);
         /* If it is, then recursively call this entry method with the List of map values */
-        objectMaskBuilder.addStatement("this.$L(((Map) $L).values(), $L)", ENTRY_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
+        if (configuration.isNativeSerializationEnabled()) {
+            objectMaskBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "{");
+
+            objectMaskBuilder.addStatement(
+                    "(($T) $L).forEach((k, v) -> $L.append($S).append(k).append($S).append($S).append(this.$L(v, $L)).append($S))",
+                    Map.class, OBJECT_PARAMETER, SERIALIZED_OBJECT, QUOTES, QUOTES, ":", ENTRY_METHOD, EVAL_PARAMETER, ",");
+
+            objectMaskBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
+            objectMaskBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
+            objectMaskBuilder.endControlFlow();
+            objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "}");
+            objectMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
+        } else {
+            objectMaskBuilder.addStatement("this.$L(((Map) $L).values(), $L)", ENTRY_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
+        }
 
         /* If it's not a Map, then check if the Object is a collection */
         objectMaskBuilder.nextControlFlow("else if ($L instanceof $T)", OBJECT_PARAMETER, Collection.class);
@@ -107,7 +121,7 @@ public class RuleObjectProcessor {
         }
         objectMaskBuilder.endControlFlow();
         if (configuration.isNativeSerializationEnabled()) {
-            objectMaskBuilder.beginControlFlow("if ($L.length() > 0)", SERIALIZED_OBJECT);
+            objectMaskBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
             objectMaskBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
             objectMaskBuilder.endControlFlow();
             objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
@@ -129,7 +143,7 @@ public class RuleObjectProcessor {
         }
         objectMaskBuilder.endControlFlow();
         if (configuration.isNativeSerializationEnabled()) {
-            objectMaskBuilder.beginControlFlow("if ($L.length() > 0)", SERIALIZED_OBJECT);
+            objectMaskBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
             objectMaskBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
             objectMaskBuilder.endControlFlow();
             objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
