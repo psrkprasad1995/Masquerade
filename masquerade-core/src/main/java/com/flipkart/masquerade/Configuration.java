@@ -17,6 +17,7 @@
 package com.flipkart.masquerade;
 
 import com.flipkart.masquerade.rule.Rule;
+import com.flipkart.masquerade.serialization.SerializationProperty;
 
 import java.util.List;
 import java.util.Set;
@@ -29,4 +30,5 @@ public interface Configuration {
     Set<Rule> getRules();
     String getCloakPackage();
     boolean isNativeSerializationEnabled();
+    Set<SerializationProperty> serializationProperties();
 }

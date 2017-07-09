@@ -16,6 +16,7 @@
 
 package com.flipkart.masquerade.test.actual;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flipkart.masquerade.annotation.IgnoreCloak;
 import com.flipkart.masquerade.test.Fruit;
 import com.flipkart.masquerade.test.Platform;
@@ -29,6 +30,7 @@ public class Two {
     private String l1;
     private Integer l2;
     @IgnoreCloak
+    @JsonIgnore
     private One one;
     private Three three;
     private Four four;

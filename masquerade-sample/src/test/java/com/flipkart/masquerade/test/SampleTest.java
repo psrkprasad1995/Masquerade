@@ -17,7 +17,6 @@
 package com.flipkart.masquerade.test;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.flipkart.masquerade.test.actual.*;
 import com.flipkart.masquerade.test.actual.collections.CollectOne;
 import com.flipkart.masquerade.test.actual.collections.CollectThree;
@@ -35,9 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Created by shrey.garg on 28/05/17.
  */
-public class SampleTest {
-    private static ObjectMapper mapper = new ObjectMapper();
-
+public class SampleTest extends BaseTest {
     @Test
     public void testSimpleCloaking() throws Exception {
         Cloak cloak = new Cloak();
@@ -54,7 +51,7 @@ public class SampleTest {
         assertNotNull(one.getT2());
         String serialized = cloak.hide(one, eval);
         assertNull(one.getT2());
-        assertEquals("{\"t1\":\"something\",\"t2\":null,\"two\":null}", serialized);
+        assertEquals(mapper.writeValueAsString(one), serialized);
 
         One deSerialized = mapper.readValue(serialized, One.class);
         assertNotNull(deSerialized);
@@ -79,7 +76,7 @@ public class SampleTest {
         assertNotNull(one.getT2());
         String serialized = cloak.hide(one, eval);
         assertNotNull(one.getT2());
-        assertEquals("{\"t1\":\"something\",\"t2\":2,\"two\":null}", serialized);
+        assertEquals(mapper.writeValueAsString(one), serialized);
 
         One deSerialized = mapper.readValue(serialized, One.class);
         assertNotNull(deSerialized);
@@ -107,7 +104,7 @@ public class SampleTest {
         assertNotNull(one.getT2());
         String serialized = cloak.hide(wrapper, eval);
         assertNull(one.getT2());
-        assertEquals("{\"response\":{\"t1\":\"something\",\"t2\":null,\"two\":null}}", serialized);
+        assertEquals(mapper.writeValueAsString(wrapper), serialized);
 
         Wrapper<One> deSerialized = mapper.readValue(serialized, new TypeReference<Wrapper<One>>() {
         });
@@ -143,7 +140,7 @@ public class SampleTest {
 
         assertNull(one.getT2());
         assertNull(two.getL1());
-        assertEquals("{\"t1\":\"something\",\"t2\":null,\"two\":{\"l1\":null,\"l2\":7,\"three\":null,\"four\":null,\"primitiveBoolean\":false,\"wrapperBoolean\":null,\"fruit\":\"APPLE\"}}", serialized);
+        assertEquals(mapper.writeValueAsString(one), serialized);
 
         One deSerialized = mapper.readValue(serialized, One.class);
         assertNotNull(deSerialized);
@@ -189,7 +186,7 @@ public class SampleTest {
         assertNull(four2.getBbDouble());
         assertNull(four3.getBbDouble());
 
-        assertEquals("{\"fours\":[{\"aaDouble\":1232.12324,\"bbDouble\":null},{\"aaDouble\":2643.12,\"bbDouble\":null},{\"aaDouble\":4124.63,\"bbDouble\":null}],\"collectTwo\":{\"threes\":[{\"a\":2,\"b\":53.125},{\"a\":624,\"b\":212.63}],\"id\":2}}", serialized);
+        assertEquals(mapper.writeValueAsString(collectOne), serialized);
 
         // TODO: 09/07/17 Fix this test once we add JsonSubTypesSupport
 //        CollectOne deSerialized = mapper.readValue(serialized, CollectOne.class);
@@ -234,7 +231,7 @@ public class SampleTest {
         assertNull(mapTwo.getTbm());
         assertNull(mapTwo1.getTbm());
 
-        assertEquals("{\"abc\":\"xyz\",\"someBoolean\":true,\"mapTwoMap\":{\"1\":{\"tbm\":null,\"objectMap\":{\"a\":false,\"b\":43.63,\"c\":{\"a\":4,\"b\":621.1},\"d\":\"Jack\"}},\"2\":{\"tbm\":null,\"objectMap\":{}}}}", serialized);
+        assertEquals(mapper.writeValueAsString(mapOne), serialized);
 
         MapOne deSerialized = mapper.readValue(serialized, MapOne.class);
         assertEquals("xyz", deSerialized.getAbc());

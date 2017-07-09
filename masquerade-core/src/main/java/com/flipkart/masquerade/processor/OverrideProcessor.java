@@ -16,9 +16,11 @@
 
 package com.flipkart.masquerade.processor;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.annotation.IgnoreCloak;
 import com.flipkart.masquerade.rule.*;
+import com.flipkart.masquerade.serialization.SerializationProperty;
 import com.flipkart.masquerade.util.FieldDescriptor;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -28,10 +30,7 @@ import com.squareup.javapoet.TypeSpec;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.flipkart.masquerade.util.Helper.*;
@@ -65,6 +64,7 @@ public class OverrideProcessor extends BaseOverrideProcessor {
         }
 
         List<Field> nonStaticFields = getNonStaticFields(clazz).stream().filter(field -> !field.isAnnotationPresent(IgnoreCloak.class)).collect(Collectors.toList());
+        nonStaticFields = orderedFields(nonStaticFields, clazz.getAnnotation(JsonPropertyOrder.class));
         int actualSize = nonStaticFields.size();
         int processed = 0;
         /* Only consider fields for processing that are not static */
@@ -230,5 +230,40 @@ public class OverrideProcessor extends BaseOverrideProcessor {
 
         ClassName enumName = ClassName.get(value.getClass().getPackage().getName(), value.getClass().getSimpleName());
         return CodeBlock.of("$T.$L", enumName, value);
+    }
+
+    private List<Field> orderedFields(List<Field> fields, JsonPropertyOrder propertyOrder) {
+        if (!configuration.isNativeSerializationEnabled()) {
+            return fields;
+        }
+
+        List<Field> sortedFields = new ArrayList<>();
+        if (propertyOrder != null && propertyOrder.value().length > 0) {
+            for (String name : propertyOrder.value()) {
+                int index = findField(name, fields);
+                if (index >= 0) {
+                    sortedFields.add(fields.remove(index));
+                }
+            }
+        }
+
+        boolean sortedAlphabetically = configuration.serializationProperties().contains(SerializationProperty.SORT_PROPERTIES_ALPHABETICALLY);
+        if (!sortedAlphabetically) {
+            sortedFields.addAll(fields);
+            return sortedFields;
+        }
+
+        fields.sort(Comparator.comparing(Field::getName));
+        sortedFields.addAll(fields);
+        return sortedFields;
+    }
+
+    private int findField(String name, List<Field> fields) {
+        for (int i = 0; i < fields.size(); i++) {
+            if (fields.get(i).getName().equals(name)) {
+                return i;
+            }
+        }
+        return -1;
     }
 }

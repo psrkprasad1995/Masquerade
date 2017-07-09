@@ -24,6 +24,14 @@ public class Eval {
     private int version;
     private String client;
 
+    public Eval() {
+    }
+
+    public Eval(Platform platform, int version) {
+        this.platform = platform;
+        this.version = version;
+    }
+
     public int getVersion() {
         return version;
     }
