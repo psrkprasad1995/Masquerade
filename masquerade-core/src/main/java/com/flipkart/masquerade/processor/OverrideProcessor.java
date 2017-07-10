@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.annotation.IgnoreCloak;
 import com.flipkart.masquerade.rule.*;
+import com.flipkart.masquerade.serialization.FieldMeta;
 import com.flipkart.masquerade.serialization.SerializationProperty;
 import com.flipkart.masquerade.util.FieldDescriptor;
 import com.squareup.javapoet.ClassName;
@@ -64,12 +65,12 @@ public class OverrideProcessor extends BaseOverrideProcessor {
             methodBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "{");
         }
 
-        List<Field> nonStaticFields = getNonStaticFields(clazz).stream().filter(field -> !field.isAnnotationPresent(IgnoreCloak.class) && !field.isAnnotationPresent(JsonIgnore.class)).collect(Collectors.toList());
-        nonStaticFields = orderedFields(nonStaticFields, clazz.getAnnotation(JsonPropertyOrder.class));
+        /* Only consider fields for processing that are not static and remove fields that are to be ignored */
+        List<Field> originalFields = getNonStaticFields(clazz).stream().filter(field -> !field.isAnnotationPresent(IgnoreCloak.class) && !field.isAnnotationPresent(JsonIgnore.class)).collect(Collectors.toList());
+        List<FieldMeta> nonStaticFields = orderedFields(originalFields, clazz);
         int actualSize = nonStaticFields.size();
         int processed = 0;
-        /* Only consider fields for processing that are not static */
-        for (Field field : nonStaticFields) {
+        for (FieldMeta field : nonStaticFields) {
             if (field.getType().isPrimitive()) {
                 if (!configuration.isNativeSerializationEnabled()) {
                     continue;
@@ -77,18 +78,18 @@ public class OverrideProcessor extends BaseOverrideProcessor {
             }
 
             if (configuration.isNativeSerializationEnabled()) {
-                methodBuilder.addStatement("$L.append($S).append($S).append($S).append($S)", SERIALIZED_OBJECT, QUOTES, field.getName(), QUOTES, ":");
+                methodBuilder.addStatement("$L.append($S).append($S).append($S).append($S)", SERIALIZED_OBJECT, QUOTES, field.getSerializableName(), QUOTES, ":");
             }
 
             Class<? extends Annotation> annotationClass = rule.getAnnotationClass();
-            Annotation[] annotations = field.getAnnotationsByType(annotationClass);
+            Annotation[] annotations = field.getField().getAnnotationsByType(annotationClass);
             if (annotations != null && annotations.length != 0) {
                 for (Annotation annotation : annotations) {
                     constructOperation(rule, annotationClass, annotation, methodBuilder, field.getName(), clazz);
                 }
             }
 
-            addRecursiveStatement(rule, clazz, field, methodBuilder, initializer);
+            addRecursiveStatement(rule, clazz, field.getField(), methodBuilder, initializer);
             if (++processed != actualSize && configuration.isNativeSerializationEnabled()) {
                 methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
             }
@@ -233,33 +234,39 @@ public class OverrideProcessor extends BaseOverrideProcessor {
         return CodeBlock.of("$T.$L", enumName, value);
     }
 
-    private List<Field> orderedFields(List<Field> fields, JsonPropertyOrder propertyOrder) {
+    private List<FieldMeta> orderedFields(List<Field> fields, Class<?> clazz) {
+        List<FieldMeta> fieldMetas = transform(fields, clazz);
         if (!configuration.isNativeSerializationEnabled()) {
-            return fields;
+            return fieldMetas;
         }
 
-        List<Field> sortedFields = new ArrayList<>();
+        List<FieldMeta> sortedFields = new ArrayList<>();
+        JsonPropertyOrder propertyOrder = clazz.getAnnotation(JsonPropertyOrder.class);
         if (propertyOrder != null && propertyOrder.value().length > 0) {
             for (String name : propertyOrder.value()) {
-                int index = findField(name, fields);
+                int index = findField(name, fieldMetas);
                 if (index >= 0) {
-                    sortedFields.add(fields.remove(index));
+                    sortedFields.add(fieldMetas.remove(index));
                 }
             }
         }
 
         boolean sortedAlphabetically = configuration.serializationProperties().contains(SerializationProperty.SORT_PROPERTIES_ALPHABETICALLY);
         if (!sortedAlphabetically) {
-            sortedFields.addAll(fields);
+            sortedFields.addAll(fieldMetas);
             return sortedFields;
         }
 
-        fields.sort(Comparator.comparing(Field::getName));
-        sortedFields.addAll(fields);
+        fieldMetas.sort(Comparator.comparing(FieldMeta::getSerializableName));
+        sortedFields.addAll(fieldMetas);
         return sortedFields;
     }
 
-    private int findField(String name, List<Field> fields) {
+    private List<FieldMeta> transform(List<Field> fields, Class<?> clazz) {
+        return fields.stream().map(field -> new FieldMeta(field, clazz)).collect(Collectors.toList());
+    }
+
+    private int findField(String name, List<FieldMeta> fields) {
         for (int i = 0; i < fields.size(); i++) {
             if (fields.get(i).getName().equals(name)) {
                 return i;
