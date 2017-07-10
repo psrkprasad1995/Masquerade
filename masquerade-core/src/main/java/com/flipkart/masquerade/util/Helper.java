@@ -23,6 +23,7 @@ import com.google.common.reflect.ClassPath;
 import com.squareup.javapoet.ClassName;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -144,6 +145,16 @@ public class Helper {
             );
         }
         return fields;
+    }
+
+    public static <T extends Annotation> T getAnnotation(Class<?> type, Class<T> annotationClass) {
+        for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+            T annotation = c.getAnnotation(annotationClass);
+            if (annotation != null) {
+                return annotation;
+            }
+        }
+        return null;
     }
 
     public static String getEvaluationFunction(BasicRule basicRule) {

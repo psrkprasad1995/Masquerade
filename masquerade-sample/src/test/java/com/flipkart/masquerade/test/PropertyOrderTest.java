@@ -80,4 +80,19 @@ public class PropertyOrderTest extends BaseTest {
         assertEquals(mapper.writeValueAsString(five), serialized);
         System.out.println(serialized);
     }
+
+    @Test
+    public void testInheritedPropertyOrder() throws Exception {
+        TwoEx two = new TwoEx();
+        two.setAbc("abc");
+        two.setAlways(true);
+        two.setDef("def");
+        two.setXyz(64);
+        two.setExtra("extra");
+
+        String serialized = cloak.hide(two, defaultEval);
+
+        assertEquals(mapper.writeValueAsString(two), serialized);
+        System.out.println(serialized);
+    }
 }

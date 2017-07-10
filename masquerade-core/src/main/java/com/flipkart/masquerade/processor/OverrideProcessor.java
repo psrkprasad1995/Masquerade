@@ -18,12 +18,15 @@ package com.flipkart.masquerade.processor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.annotation.IgnoreCloak;
 import com.flipkart.masquerade.rule.*;
 import com.flipkart.masquerade.serialization.FieldMeta;
 import com.flipkart.masquerade.serialization.SerializationProperty;
 import com.flipkart.masquerade.util.FieldDescriptor;
+import com.flipkart.masquerade.util.Helper;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
@@ -68,6 +71,7 @@ public class OverrideProcessor extends BaseOverrideProcessor {
         /* Only consider fields for processing that are not static and remove fields that are to be ignored */
         List<Field> originalFields = getNonStaticFields(clazz).stream().filter(field -> !field.isAnnotationPresent(IgnoreCloak.class) && !field.isAnnotationPresent(JsonIgnore.class)).collect(Collectors.toList());
         List<FieldMeta> nonStaticFields = orderedFields(originalFields, clazz);
+        addSubTypeControl(clazz, nonStaticFields);
         int actualSize = nonStaticFields.size();
         int processed = 0;
         for (FieldMeta field : nonStaticFields) {
@@ -78,6 +82,14 @@ public class OverrideProcessor extends BaseOverrideProcessor {
             }
 
             if (configuration.isNativeSerializationEnabled()) {
+                if (field.isSynthetic()) {
+                    methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, QUOTES + field.getSerializableName() + QUOTES + ":" + QUOTES + field.getSyntheticValue() + QUOTES);
+                    if (++processed != actualSize && configuration.isNativeSerializationEnabled()) {
+                        methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
+                    }
+                    continue;
+                }
+
                 methodBuilder.addStatement("$L.append($S).append($S).append($S).append($S)", SERIALIZED_OBJECT, QUOTES, field.getSerializableName(), QUOTES, ":");
             }
 
@@ -241,7 +253,7 @@ public class OverrideProcessor extends BaseOverrideProcessor {
         }
 
         List<FieldMeta> sortedFields = new ArrayList<>();
-        JsonPropertyOrder propertyOrder = clazz.getAnnotation(JsonPropertyOrder.class);
+        JsonPropertyOrder propertyOrder = getAnnotation(clazz, JsonPropertyOrder.class);
         if (propertyOrder != null && propertyOrder.value().length > 0) {
             for (String name : propertyOrder.value()) {
                 int index = findField(name, fieldMetas);
@@ -273,5 +285,28 @@ public class OverrideProcessor extends BaseOverrideProcessor {
             }
         }
         return -1;
+    }
+
+    private void addSubTypeControl(Class<?> clazz, List<FieldMeta> fields) {
+        if (!configuration.isNativeSerializationEnabled()) {
+            return;
+        }
+
+        JsonTypeInfo jsonTypeInfo = getAnnotation(clazz, JsonTypeInfo.class);
+        JsonSubTypes jsonSubTypes = getAnnotation(clazz, JsonSubTypes.class);
+        if (jsonTypeInfo == null || jsonSubTypes == null) {
+            return;
+        }
+
+        if (!jsonTypeInfo.include().equals(JsonTypeInfo.As.PROPERTY)) {
+            return;
+        }
+
+        Optional<JsonSubTypes.Type> subType = Arrays.stream(jsonSubTypes.value()).filter(t -> t.value().equals(clazz)).findFirst();
+        if (!subType.isPresent()) {
+            return;
+        }
+
+        fields.add(0, new FieldMeta(jsonTypeInfo.property(), clazz, subType.get().name()));
     }
 }

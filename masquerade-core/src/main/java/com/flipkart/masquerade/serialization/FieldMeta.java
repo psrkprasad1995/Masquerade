@@ -16,14 +16,27 @@ import static com.flipkart.masquerade.util.Helper.getSetterName;
 public class FieldMeta {
     private final String name;
     private final Class<?> type;
-    private String serializableName;
+    private final String serializableName;
     private final Field field;
+    private final boolean synthetic;
+    private final String syntheticValue;
 
     public FieldMeta(Field field, Class<?> clazz) {
         this.name = field.getName();
         this.type = field.getType();
         this.serializableName = getSerializableName(field, clazz);
         this.field = field;
+        this.synthetic = false;
+        this.syntheticValue = null;
+    }
+
+    public FieldMeta(String name, Class<?> type, String syntheticValue) {
+        this.name = name;
+        this.serializableName = name;
+        this.type = type;
+        this.field = null;
+        this.synthetic = true;
+        this.syntheticValue = syntheticValue;
     }
 
     public String getName() {
@@ -36,6 +49,14 @@ public class FieldMeta {
 
     public String getSerializableName() {
         return serializableName;
+    }
+
+    public boolean isSynthetic() {
+        return synthetic;
+    }
+
+    public String getSyntheticValue() {
+        return syntheticValue;
     }
 
     private String getSerializableName(Field field, Class<?> clazz) {
@@ -63,7 +84,7 @@ public class FieldMeta {
         return field;
     }
 
-    private Function<JsonProperty, String> valueFunc = p -> {
+    private final Function<JsonProperty, String> valueFunc = p -> {
         if (p.value().trim().isEmpty()) {
             return null;
         }
