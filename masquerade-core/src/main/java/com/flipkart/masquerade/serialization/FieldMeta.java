@@ -14,10 +14,10 @@ import static com.flipkart.masquerade.util.Helper.getSetterName;
  * Created by shrey.garg on 10/07/17.
  */
 public class FieldMeta {
-    private String name;
-    private Class<?> type;
+    private final String name;
+    private final Class<?> type;
     private String serializableName;
-    private Field field;
+    private final Field field;
 
     public FieldMeta(Field field, Class<?> clazz) {
         this.name = field.getName();
@@ -30,28 +30,15 @@ public class FieldMeta {
         return name;
     }
 
-    public void setName(String name) {
-        this.name = name;
-    }
-
     public Class<?> getType() {
         return type;
-    }
-
-    public void setType(Class<?> type) {
-        this.type = type;
     }
 
     public String getSerializableName() {
         return serializableName;
     }
 
-    public void setSerializableName(String serializableName) {
-        this.serializableName = serializableName;
-    }
-
     private String getSerializableName(Field field, Class<?> clazz) {
-
         String getter = getGetterName(field.getName(), field.getType().equals(Boolean.TYPE), field.getType().isPrimitive());
         String setter = getSetterName(field.getName());
         Method getterMethod;
@@ -74,10 +61,6 @@ public class FieldMeta {
 
     public Field getField() {
         return field;
-    }
-
-    public void setField(Field field) {
-        this.field = field;
     }
 
     private Function<JsonProperty, String> valueFunc = p -> {
