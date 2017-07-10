@@ -2,6 +2,7 @@ package com.flipkart.masquerade.test;
 
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import org.test.veils.Cloak;
 
 /**
@@ -14,5 +15,6 @@ public class BaseTest {
 
     static {
         mapper.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
     }
 }

@@ -16,6 +16,7 @@
 
 package com.flipkart.masquerade.processor;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.annotation.IgnoreCloak;
@@ -63,7 +64,7 @@ public class OverrideProcessor extends BaseOverrideProcessor {
             methodBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "{");
         }
 
-        List<Field> nonStaticFields = getNonStaticFields(clazz).stream().filter(field -> !field.isAnnotationPresent(IgnoreCloak.class)).collect(Collectors.toList());
+        List<Field> nonStaticFields = getNonStaticFields(clazz).stream().filter(field -> !field.isAnnotationPresent(IgnoreCloak.class) && !field.isAnnotationPresent(JsonIgnore.class)).collect(Collectors.toList());
         nonStaticFields = orderedFields(nonStaticFields, clazz.getAnnotation(JsonPropertyOrder.class));
         int actualSize = nonStaticFields.size();
         int processed = 0;
