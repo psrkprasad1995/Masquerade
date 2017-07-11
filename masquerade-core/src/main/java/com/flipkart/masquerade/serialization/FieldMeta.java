@@ -1,5 +1,6 @@
 package com.flipkart.masquerade.serialization;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.lang.reflect.Field;
@@ -20,6 +21,8 @@ public class FieldMeta {
     private final Field field;
     private final boolean synthetic;
     private final String syntheticValue;
+    private JsonInclude.Include inclusionLevel;
+    private boolean maskable = true;
 
     public FieldMeta(Field field, Class<?> clazz) {
         this.name = field.getName();
@@ -90,4 +93,20 @@ public class FieldMeta {
         }
         return p.value();
     };
+
+    public JsonInclude.Include getInclusionLevel() {
+        return inclusionLevel;
+    }
+
+    public void setInclusionLevel(JsonInclude.Include inclusionLevel) {
+        this.inclusionLevel = inclusionLevel;
+    }
+
+    public boolean isMaskable() {
+        return maskable;
+    }
+
+    public void setMaskable(boolean maskable) {
+        this.maskable = maskable;
+    }
 }

@@ -74,6 +74,14 @@ public class Helper {
         return ret;
     }
 
+    public static Set<Class<?>> getEmptiableTypes() {
+        Set<Class<?>> ret = new HashSet<>();
+        ret.add(Map.class);
+        ret.add(Collection.class);
+        ret.add(String.class);
+        return ret;
+    }
+
     private static String capitalize(String name) {
         return name.substring(0, 1).toUpperCase() + name.substring(1);
     }

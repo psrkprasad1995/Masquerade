@@ -17,6 +17,7 @@
 package com.flipkart.masquerade.test.actual;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.flipkart.masquerade.annotation.IgnoreCloak;
 import com.flipkart.masquerade.test.Fruit;
 import com.flipkart.masquerade.test.Platform;
@@ -34,6 +35,7 @@ public class Two {
     private One one;
     private Three three;
     private Four four;
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
     private boolean primitiveBoolean;
     private Boolean wrapperBoolean;
     private Fruit fruit = Fruit.APPLE;
