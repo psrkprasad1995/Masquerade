@@ -160,6 +160,7 @@ public class InclusionTest extends BaseTest {
         SubEmpty empty = new SubEmpty();
         empty.setAbc(new ArrayList<>());
         empty.setMap(new HashMap<>());
+        empty.setArray(new Integer[] {});
 
         String serialized = cloak.hide(empty, defaultEval);
         System.out.println(serialized);
@@ -172,6 +173,7 @@ public class InclusionTest extends BaseTest {
         SubEmpty empty = new SubEmpty();
         empty.setAbc(Arrays.asList("a", "d"));
         empty.setMap(Collections.singletonMap("xa", "ax"));
+        empty.setArray(new Integer[] {1, 2, 5});
 
         String serialized = cloak.hide(empty, defaultEval);
         System.out.println(serialized);

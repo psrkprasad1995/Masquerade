@@ -7,6 +7,7 @@ import java.util.Map;
  */
 public class SubEmpty extends Empty {
     private Map<String, String> map;
+    private Integer[] array;
 
     public Map<String, String> getMap() {
         return map;
@@ -14,5 +15,13 @@ public class SubEmpty extends Empty {
 
     public void setMap(Map<String, String> map) {
         this.map = map;
+    }
+
+    public Integer[] getArray() {
+        return array;
+    }
+
+    public void setArray(Integer[] array) {
+        this.array = array;
     }
 }

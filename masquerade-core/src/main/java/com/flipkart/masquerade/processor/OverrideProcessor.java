@@ -379,11 +379,15 @@ public class OverrideProcessor extends BaseOverrideProcessor {
                 case NON_NULL:
                     return CodeBlock.of("if ($L.$L() != null)", OBJECT_PARAMETER, getterName);
                 case NON_EMPTY:
-                    if (getEmptiableTypes().stream().noneMatch(t -> t.isAssignableFrom(field.getType()))) {
-                        fieldMeta.setMaskable(false);
-                        return null;
+                    if (field.getType().isArray()) {
+                        return CodeBlock.of("if ($L.$L() != null && $L.$L().length > 0)", OBJECT_PARAMETER, getterName, OBJECT_PARAMETER, getterName);
+                    } else {
+                        if (getEmptiableTypes().stream().noneMatch(t -> t.isAssignableFrom(field.getType()))) {
+                            fieldMeta.setMaskable(false);
+                            return null;
+                        }
+                        return CodeBlock.of("if ($L.$L() != null && !$L.$L().isEmpty())", OBJECT_PARAMETER, getterName, OBJECT_PARAMETER, getterName);
                     }
-                    return CodeBlock.of("if ($L.$L() != null && !$L.$L().isEmpty())", OBJECT_PARAMETER, getterName, OBJECT_PARAMETER, getterName);
                 default:
                     fieldMeta.setMaskable(false);
                     return null;
