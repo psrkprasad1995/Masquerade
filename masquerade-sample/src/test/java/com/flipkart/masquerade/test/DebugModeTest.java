@@ -23,6 +23,6 @@ public class DebugModeTest extends BaseTest {
 //        System.out.println(serialized);
 //
 //        assertEquals(1, missingClasses.size());
-//        assertEquals(NotIncluded.class.getName(), missingClasses.get(0));
+//        assertEquals(NotIncluded.class.getName(), missingClasses.toArray()[0]);
 //    }
 }

@@ -1,13 +1,12 @@
 package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
-import com.flipkart.masquerade.util.Strings;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import javax.lang.model.element.Modifier;
-import java.util.List;
+import java.util.Set;
 
 import static com.flipkart.masquerade.util.Strings.DEBUG_LIST;
 import static com.flipkart.masquerade.util.Strings.OBJECT_PARAMETER;
@@ -33,10 +32,10 @@ public class DebugProcessor {
             return;
         }
 
-        cloakBuilder.addField(ParameterizedTypeName.get(List.class, String.class), DEBUG_LIST, Modifier.PRIVATE, Modifier.FINAL);
+        cloakBuilder.addField(ParameterizedTypeName.get(Set.class, String.class), DEBUG_LIST, Modifier.PRIVATE, Modifier.FINAL);
         cloakBuilder.addMethod(MethodSpec.constructorBuilder()
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(ParameterizedTypeName.get(List.class, String.class), DEBUG_LIST, Modifier.FINAL)
+                .addParameter(ParameterizedTypeName.get(Set.class, String.class), DEBUG_LIST, Modifier.FINAL)
                 .addStatement("this.$L = $L", DEBUG_LIST, DEBUG_LIST).build());
     }
 
