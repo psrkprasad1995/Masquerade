@@ -24,7 +24,6 @@ import com.flipkart.masquerade.rule.*;
 import com.flipkart.masquerade.serialization.FieldMeta;
 import com.flipkart.masquerade.serialization.SerializationProperty;
 import com.flipkart.masquerade.util.FieldDescriptor;
-import com.flipkart.masquerade.util.Helper;
 import com.google.common.base.Defaults;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -91,7 +90,7 @@ public class OverrideProcessor extends BaseOverrideProcessor {
                 Annotation[] annotations = field.getField().getAnnotationsByType(annotationClass);
                 if (annotations != null && annotations.length != 0) {
                     for (Annotation annotation : annotations) {
-                        constructOperation(rule, annotationClass, annotation, methodBuilder, field.getName(), clazz);
+                        constructOperation(rule, annotationClass, annotation, methodBuilder, field.getField(), clazz);
                     }
                 }
             }
@@ -148,7 +147,7 @@ public class OverrideProcessor extends BaseOverrideProcessor {
                 !getWrapperTypes().contains(field.getType()) &&
                 !String.class.isAssignableFrom(field.getType()) &&
                 !field.getType().isEnum()) || configuration.isNativeSerializationEnabled()) {
-            String getter = getGetterName(field.getName(), field.getType().equals(Boolean.TYPE), field.getType().isPrimitive());
+            String getter = getGetterName(field.getName(), isBoolean(field.getType()), field.getType().isPrimitive());
             try {
                 clazz.getMethod(getter);
             } catch (NoSuchMethodException e) {
@@ -180,17 +179,17 @@ public class OverrideProcessor extends BaseOverrideProcessor {
         initializer.addStatement("$L.put($S, new $T())", rule.getName(), clazz.getName(), cloakName);
     }
 
-    private void constructOperation(Rule rule, Class<? extends Annotation> annotationClass, Annotation annotation, MethodSpec.Builder builder, String fieldName, Class<?> clazz) {
+    private void constructOperation(Rule rule, Class<? extends Annotation> annotationClass, Annotation annotation, MethodSpec.Builder builder, Field field, Class<?> clazz) {
         List<Object> operands = new ArrayList<>();
 
         CompositeRule baseRule = rule.getValueRule();
         String operation = constructBasicOperation(baseRule, baseRule.getConjunction(), annotationClass, annotation, operands);
 
-        String setter = getSetterName(fieldName);
+        String setter = getSetterName(field.getName(), isBoolean(field.getType()));
         Arrays.stream(clazz.getMethods())
                 .filter(method -> method.getName().equals(setter))
                 .findFirst()
-                .orElseThrow(() -> new UnsupportedOperationException("A cloak-able class should have a setter defined for all fields. Class: " + clazz.getName() + " Field: " + fieldName));
+                .orElseThrow(() -> new UnsupportedOperationException("A cloak-able class should have a setter defined for all fields. Class: " + clazz.getName() + " Field: " + field.getName()));
 
         builder.beginControlFlow("if (" + operation + ")", operands.toArray());
         builder.addStatement("$L.$L(null)", OBJECT_PARAMETER, setter);
@@ -365,7 +364,7 @@ public class OverrideProcessor extends BaseOverrideProcessor {
 
     private CodeBlock constructInclusionCondition(FieldMeta fieldMeta) {
         Field field = fieldMeta.getField();
-        String getterName = getGetterName(field.getName(), field.getType().equals(Boolean.TYPE), field.getType().isPrimitive());
+        String getterName = getGetterName(field.getName(), isBoolean(field.getType()), field.getType().isPrimitive());
         if (field.getType().isPrimitive()) {
             if (fieldMeta.getInclusionLevel() == JsonInclude.Include.NON_DEFAULT) {
                 Object value = Defaults.defaultValue(field.getType());

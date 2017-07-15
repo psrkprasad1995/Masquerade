@@ -260,4 +260,18 @@ public class SampleTest extends BaseTest {
         assertNotNull(deSerializedMapTwo1.getObjectMap());
         assertTrue(deSerializedMapTwo1.getObjectMap().isEmpty());
     }
+
+    @Test
+    public void testOthers() throws Exception {
+        Others others = new Others();
+        others.setA(32);
+        others.setIs(true);
+        others.setProductSuffix("something");
+        others.setIsNotBoolean("not a boolean");
+
+        String serialized = cloak.hide(others, defaultEval);
+
+        assertEquals(mapper.writeValueAsString(others), serialized);
+        System.out.println(serialized);
+    }
 }

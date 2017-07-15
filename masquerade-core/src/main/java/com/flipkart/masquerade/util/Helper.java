@@ -35,9 +35,14 @@ import static com.flipkart.masquerade.util.Strings.*;
  * Created by shrey.garg on 25/04/17.
  */
 public class Helper {
-    public static String getSetterName(String name) {
+    public static String getSetterName(String name, boolean isBoolean) {
         String capitalizedName = capitalize(name);
         String prefix = "set";
+
+        if (isBoolean) {
+            capitalizedName = handleIsPrefix(capitalizedName);
+        }
+
         return prefix + capitalizedName;
     }
 
@@ -46,11 +51,7 @@ public class Helper {
         String prefix = "get";
 
         if (isBoolean) {
-            if (capitalizedName.startsWith("Is")) {
-                if (capitalizedName.length() > 2 && Character.isUpperCase(capitalizedName.charAt(2))) {
-                    capitalizedName = capitalizedName.substring(2);
-                }
-            }
+            capitalizedName = handleIsPrefix(capitalizedName);
 
             if (isPrimitive) {
                 prefix = "is";
@@ -58,6 +59,18 @@ public class Helper {
         }
 
         return prefix + capitalizedName;
+    }
+
+    public static String handleIsPrefix(String name) {
+        String capitalizedName = capitalize(name);
+
+        if (capitalizedName.startsWith("Is")) {
+            if (capitalizedName.length() > 2 && Character.isUpperCase(capitalizedName.charAt(2))) {
+                capitalizedName = capitalizedName.substring(2);
+            }
+        }
+
+        return capitalizedName;
     }
 
     public static Set<Class<?>> getWrapperTypes() {
@@ -84,6 +97,10 @@ public class Helper {
 
     private static String capitalize(String name) {
         return name.substring(0, 1).toUpperCase() + name.substring(1);
+    }
+
+    public static String deCapitalize(String name) {
+        return name.substring(0, 1).toLowerCase() + name.substring(1);
     }
 
     public static ClassName getRuleInterface(Configuration configuration, Rule rule) {
@@ -175,5 +192,9 @@ public class Helper {
 
     public static boolean isPublic(Class clazz) {
         return Modifier.isPublic(clazz.getModifiers());
+    }
+
+    public static boolean isBoolean(Class<?> clazz) {
+        return clazz.equals(Boolean.TYPE) || clazz.equals(Boolean.class);
     }
 }

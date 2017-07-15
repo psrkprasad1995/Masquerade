@@ -2,14 +2,14 @@ package com.flipkart.masquerade.serialization;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.flipkart.masquerade.util.Helper;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Optional;
 import java.util.function.Function;
 
-import static com.flipkart.masquerade.util.Helper.getGetterName;
-import static com.flipkart.masquerade.util.Helper.getSetterName;
+import static com.flipkart.masquerade.util.Helper.*;
 
 /**
  * Created by shrey.garg on 10/07/17.
@@ -63,8 +63,8 @@ public class FieldMeta {
     }
 
     private String getSerializableName(Field field, Class<?> clazz) {
-        String getter = getGetterName(field.getName(), field.getType().equals(Boolean.TYPE), field.getType().isPrimitive());
-        String setter = getSetterName(field.getName());
+        String getter = getGetterName(field.getName(), isBoolean(field.getType()), field.getType().isPrimitive());
+        String setter = getSetterName(field.getName(), isBoolean(field.getType()));
         Method getterMethod;
         Method setterMethod;
         try {
@@ -80,7 +80,7 @@ public class FieldMeta {
         return Optional.ofNullable(fieldJsonProperty).map(valueFunc)
                 .orElse(Optional.ofNullable(getterJsonProperty).map(valueFunc)
                         .orElse(Optional.ofNullable(setterJsonProperty).map(valueFunc)
-                                .orElse(field.getName())));
+                                .orElse(handleBooleans(field))));
     }
 
     public Field getField() {
@@ -93,6 +93,14 @@ public class FieldMeta {
         }
         return p.value();
     };
+
+    private String handleBooleans(Field field) {
+        if (!isBoolean(field.getType())) {
+            return field.getName();
+        }
+
+        return deCapitalize(handleIsPrefix(field.getName()));
+    }
 
     public JsonInclude.Include getInclusionLevel() {
         return inclusionLevel;
