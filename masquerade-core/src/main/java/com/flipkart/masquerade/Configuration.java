@@ -31,4 +31,5 @@ public interface Configuration {
     String getCloakPackage();
     boolean isNativeSerializationEnabled();
     Set<SerializationProperty> serializationProperties();
+    boolean isDebugMode();
 }

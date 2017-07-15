@@ -35,4 +35,6 @@ public class Strings {
     public static final String SERIALIZED_OBJECT = "serialized";
 
     public static final String QUOTES = "\"";
+
+    public static final String DEBUG_LIST = "missingClasses";
 }

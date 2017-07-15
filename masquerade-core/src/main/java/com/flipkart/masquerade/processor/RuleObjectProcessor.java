@@ -37,6 +37,7 @@ import static com.flipkart.masquerade.util.Strings.*;
 public class RuleObjectProcessor {
     private final Configuration configuration;
     private final TypeSpec.Builder cloakBuilder;
+    private final DebugProcessor debugProcessor;
 
     /**
      * @param configuration Configuration for the current processing cycle
@@ -45,6 +46,7 @@ public class RuleObjectProcessor {
     public RuleObjectProcessor(Configuration configuration, TypeSpec.Builder cloakBuilder) {
         this.configuration = configuration;
         this.cloakBuilder = cloakBuilder;
+        this.debugProcessor = new DebugProcessor(configuration, cloakBuilder);
     }
 
     /**
@@ -149,6 +151,7 @@ public class RuleObjectProcessor {
             objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
             objectMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
         }
+        debugProcessor.addDebugCollector(objectMaskBuilder);
         objectMaskBuilder.endControlFlow();
         objectMaskBuilder.endControlFlow();
 

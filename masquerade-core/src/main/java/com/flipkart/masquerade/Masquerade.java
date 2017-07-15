@@ -71,6 +71,9 @@ public class Masquerade {
         OverrideProcessor overrideProcessor = new OverrideProcessor(configuration, builder);
         NoOpInitializationProcessor noOpInitializationProcessor = new NoOpInitializationProcessor(configuration, builder);
 
+        DebugProcessor debugProcessor = new DebugProcessor(configuration, builder);
+        debugProcessor.addConstructor();
+
         configuration.getRules().forEach(rule -> noOpInitializationProcessor.generateNoOpEntries(rule, staticCode));
         specs.addAll(ruleProcessor.generateRuleTypeSpecs());
 

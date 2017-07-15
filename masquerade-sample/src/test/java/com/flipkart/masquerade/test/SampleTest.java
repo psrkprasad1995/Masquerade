@@ -23,8 +23,8 @@ import com.flipkart.masquerade.test.actual.collections.CollectThree;
 import com.flipkart.masquerade.test.actual.maps.MapOne;
 import com.flipkart.masquerade.test.actual.maps.MapTwo;
 import org.junit.jupiter.api.Test;
-import org.test.veils.Cloak;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,8 +37,6 @@ import static org.junit.jupiter.api.Assertions.*;
 public class SampleTest extends BaseTest {
     @Test
     public void testSimpleCloaking() throws Exception {
-        Cloak cloak = new Cloak();
-
         One one = new One();
         one.setT1("something");
         one.setT2(2);
@@ -62,8 +60,6 @@ public class SampleTest extends BaseTest {
 
     @Test
     public void testSimpleNotCloaking() throws Exception {
-        Cloak cloak = new Cloak();
-
         One one = new One();
         one.setT1("something");
         one.setT2(2);
@@ -87,8 +83,6 @@ public class SampleTest extends BaseTest {
 
     @Test
     public void testGenericCloaking() throws Exception {
-        Cloak cloak = new Cloak();
-
         One one = new One();
         one.setT1("something");
         one.setT2(2);
@@ -115,8 +109,6 @@ public class SampleTest extends BaseTest {
 
     @Test
     public void testComplexCloaking() throws Exception {
-        Cloak cloak = new Cloak();
-
         One one = new One();
         one.setT1("something");
         one.setT2(2);
@@ -155,8 +147,6 @@ public class SampleTest extends BaseTest {
 
     @Test
     public void testCollectionCloaking() throws Exception {
-        Cloak cloak = new Cloak();
-
         CollectThree collectThree = new CollectThree();
         collectThree.setId(2);
 
@@ -194,8 +184,6 @@ public class SampleTest extends BaseTest {
 
     @Test
     public void testMapCloaking() throws Exception {
-        Cloak cloak = new Cloak();
-
         Map<String, Object> objectMap = new HashMap<>();
         objectMap.put("b", 43.63);
         objectMap.put("a", false);
@@ -268,6 +256,7 @@ public class SampleTest extends BaseTest {
         others.setIs(true);
         others.setProductSuffix("something");
         others.setIsNotBoolean("not a boolean");
+        others.setArrayList(new ArrayList<>());
 
         String serialized = cloak.hide(others, defaultEval);
 

@@ -75,4 +75,9 @@ public class TestConfig implements Configuration {
     public Set<SerializationProperty> serializationProperties() {
         return serializationProperties;
     }
+
+    @Override
+    public boolean isDebugMode() {
+        return false;
+    }
 }

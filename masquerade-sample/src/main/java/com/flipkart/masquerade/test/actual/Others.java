@@ -1,6 +1,9 @@
 package com.flipkart.masquerade.test.actual;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.ArrayList;
 
 /**
  * Created by shrey.garg on 15/07/17.
@@ -11,6 +14,8 @@ public class Others {
     private String productSuffix;
     private Integer a;
     private String isNotBoolean;
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    private ArrayList<String> arrayList;
 
     public boolean isIs() {
         return is;
@@ -42,5 +47,13 @@ public class Others {
 
     public void setIsNotBoolean(String isNotBoolean) {
         this.isNotBoolean = isNotBoolean;
+    }
+
+    public ArrayList<String> getArrayList() {
+        return arrayList;
+    }
+
+    public void setArrayList(ArrayList<String> arrayList) {
+        this.arrayList = arrayList;
     }
 }
