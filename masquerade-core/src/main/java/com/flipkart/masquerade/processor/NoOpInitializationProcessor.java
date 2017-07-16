@@ -43,7 +43,7 @@ public class NoOpInitializationProcessor {
     }
 
     /**
-     * @param rule The rule to generate the interface for
+     * @param rule The rule to generate the entries for
      */
     public void generateNoOpEntries(Rule rule, CodeBlock.Builder initializer) {
         for (Class<?> clazz : getWrapperTypes()) {

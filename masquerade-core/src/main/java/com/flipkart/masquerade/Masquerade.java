@@ -70,11 +70,13 @@ public class Masquerade {
         RuleProcessor ruleProcessor = new RuleProcessor(configuration, builder);
         OverrideProcessor overrideProcessor = new OverrideProcessor(configuration, builder);
         NoOpInitializationProcessor noOpInitializationProcessor = new NoOpInitializationProcessor(configuration, builder);
+        ToStringInitializationProcessor toStringInitializationProcessor = new ToStringInitializationProcessor(configuration, builder);
 
         DebugProcessor debugProcessor = new DebugProcessor(configuration, builder);
         debugProcessor.addConstructor();
 
         configuration.getRules().forEach(rule -> noOpInitializationProcessor.generateNoOpEntries(rule, staticCode));
+        configuration.getRules().forEach(rule -> toStringInitializationProcessor.generateToStringEntries(rule, staticCode));
         specs.addAll(ruleProcessor.generateRuleTypeSpecs());
 
         for (ClassPath.ClassInfo info : scannedClasses) {

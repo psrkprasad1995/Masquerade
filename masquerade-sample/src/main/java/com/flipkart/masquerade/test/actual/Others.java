@@ -3,6 +3,7 @@ package com.flipkart.masquerade.test.actual;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.net.URI;
 import java.util.ArrayList;
 
 /**
@@ -16,6 +17,10 @@ public class Others {
     private String isNotBoolean;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private ArrayList<String> arrayList;
+    Boolean isActiveSubscriber;
+    private boolean value;
+    private URI uri;
+    private int[] ints;
 
     public boolean isIs() {
         return is;
@@ -55,5 +60,37 @@ public class Others {
 
     public void setArrayList(ArrayList<String> arrayList) {
         this.arrayList = arrayList;
+    }
+
+    public Boolean getActiveSubscriber() {
+        return isActiveSubscriber;
+    }
+
+    public void setActiveSubscriber(Boolean activeSubscriber) {
+        isActiveSubscriber = activeSubscriber;
+    }
+
+    public boolean isValue() {
+        return value;
+    }
+
+    public void setValue(boolean value) {
+        this.value = value;
+    }
+
+    public URI getUri() {
+        return uri;
+    }
+
+    public void setUri(URI uri) {
+        this.uri = uri;
+    }
+
+    public int[] getInts() {
+        return ints;
+    }
+
+    public void setInts(int[] ints) {
+        this.ints = ints;
     }
 }

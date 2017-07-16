@@ -18,14 +18,15 @@ package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.rule.Rule;
+import com.flipkart.masquerade.util.Helper;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
 import javax.lang.model.element.Modifier;
-import java.util.Collection;
-import java.util.Map;
+import java.util.*;
 
+import static com.flipkart.masquerade.util.Helper.getPrimitivesTypes;
 import static com.flipkart.masquerade.util.Helper.getRuleInterface;
 import static com.flipkart.masquerade.util.Strings.*;
 
@@ -150,6 +151,33 @@ public class RuleObjectProcessor {
             objectMaskBuilder.endControlFlow();
             objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
             objectMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
+        }
+        /* If it's not an Object[], then check if the Object is a primitive array, only if native serialization is enabled */
+        if (configuration.isNativeSerializationEnabled()) {
+            objectMaskBuilder.nextControlFlow("else if ($L.getClass().isArray())", OBJECT_PARAMETER);
+            /* Need to check for all primitive types individually */
+            List<Class<?>> primitiveTypes = new ArrayList<>(getPrimitivesTypes());
+            for (int i = 0; i < primitiveTypes.size(); i++) {
+                Class<?> primitiveType = primitiveTypes.get(i);
+                if (i == 0) {
+                    objectMaskBuilder.beginControlFlow("if ($L instanceof $T[])", OBJECT_PARAMETER, primitiveType);
+                } else {
+                    objectMaskBuilder.nextControlFlow("else if ($L instanceof $T[])", OBJECT_PARAMETER, primitiveType);
+                }
+                /* Iterate over the array */
+                objectMaskBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "[");
+                objectMaskBuilder.beginControlFlow("for ($T o : (($T[]) $L))", primitiveType, primitiveType, OBJECT_PARAMETER);
+                /* And recursively call this entry method for each object */
+                objectMaskBuilder.addStatement("$L.append(this.$L(o, $L))", SERIALIZED_OBJECT, ENTRY_METHOD, EVAL_PARAMETER);
+                objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
+                objectMaskBuilder.endControlFlow();
+                objectMaskBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
+                objectMaskBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
+                objectMaskBuilder.endControlFlow();
+                objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
+                objectMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
+            }
+            objectMaskBuilder.endControlFlow();
         }
         debugProcessor.addDebugCollector(objectMaskBuilder);
         objectMaskBuilder.endControlFlow();

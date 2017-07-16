@@ -87,6 +87,19 @@ public class Helper {
         return ret;
     }
 
+    public static Set<Class<?>> getPrimitivesTypes() {
+        Set<Class<?>> ret = new HashSet<>();
+        ret.add(Boolean.TYPE);
+        ret.add(Character.TYPE);
+        ret.add(Byte.TYPE);
+        ret.add(Short.TYPE);
+        ret.add(Integer.TYPE);
+        ret.add(Long.TYPE);
+        ret.add(Float.TYPE);
+        ret.add(Double.TYPE);
+        return ret;
+    }
+
     public static Set<Class<?>> getEmptiableTypes() {
         Set<Class<?>> ret = new HashSet<>();
         ret.add(Map.class);
@@ -123,12 +136,20 @@ public class Helper {
         return generateImplementationName(rule, "Enum");
     }
 
+    public static String getToStringImplementationName(Rule rule) {
+        return generateImplementationName(rule, "ToString");
+    }
+
     public static ClassName getNoOpImplementationClass(Configuration configuration, Rule rule) {
         return ClassName.get(configuration.getCloakPackage(), getNoOpImplementationName(rule));
     }
 
     public static ClassName getEnumImplementationClass(Configuration configuration, Rule rule) {
         return ClassName.get(configuration.getCloakPackage(), getEnumImplementationName(rule));
+    }
+
+    public static ClassName getToStringImplementationClass(Configuration configuration, Rule rule) {
+        return ClassName.get(configuration.getCloakPackage(), getToStringImplementationName(rule));
     }
 
     private static String generateImplementationName(Rule rule, String prefix) {
@@ -149,6 +170,10 @@ public class Helper {
 
     public static String getEnumVariableName(Rule rule) {
         return "enum" + rule.getName();
+    }
+
+    public static String getToStringVariableName(Rule rule) {
+        return "toString" + rule.getName();
     }
 
     public static Set<ClassPath.ClassInfo> getPackageClasses(ClassLoader classLoader, List<String> packagesToScan) throws IOException {

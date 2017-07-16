@@ -56,6 +56,7 @@ public class RuleProcessor {
         RuleObjectProcessor ruleObjectProcessor = new RuleObjectProcessor(configuration, cloakBuilder);
         NoOpOverrideProcessor noOpOverrideProcessor = new NoOpOverrideProcessor(configuration, cloakBuilder);
         EnumOverrideProcessor enumOverrideProcessor = new EnumOverrideProcessor(configuration, cloakBuilder);
+        ToStringProcessor toStringProcessor = new ToStringProcessor(configuration, cloakBuilder);
 
         for (Rule rule : configuration.getRules()) {
             /* Verify if the Rule is constructed properly */
@@ -72,6 +73,8 @@ public class RuleProcessor {
             specs.add(new TypeSpecContainer(configuration.getCloakPackage(), noOpOverrideProcessor.createOverride(rule)));
             /* Creates a Enum implementation for each Rule which can be used for enums */
             specs.add(new TypeSpecContainer(configuration.getCloakPackage(), enumOverrideProcessor.createOverride(rule)));
+            /* Creates a ToString implementation for each Rule which can be used for any class which needs to be serialized by calling toString() */
+            specs.add(new TypeSpecContainer(configuration.getCloakPackage(), toStringProcessor.createOverride(rule)));
             /* Create a NoOP Mask field */
             FieldSpec fieldSpec = FieldSpec.builder(getRuleInterface(configuration, rule), getNoOpVariableName(rule), Modifier.PRIVATE)
                     .initializer("new $T()", getNoOpImplementationClass(configuration, rule)).build();
@@ -79,6 +82,9 @@ public class RuleProcessor {
             FieldSpec enumFieldSpec = FieldSpec.builder(getRuleInterface(configuration, rule), getEnumVariableName(rule), Modifier.PRIVATE)
                     .initializer("new $T()", getEnumImplementationClass(configuration, rule)).build();
             cloakBuilder.addField(enumFieldSpec);
+            FieldSpec toStringFieldSpec = FieldSpec.builder(getRuleInterface(configuration, rule), getToStringVariableName(rule), Modifier.PRIVATE)
+                    .initializer("new $T()", getToStringImplementationClass(configuration, rule)).build();
+            cloakBuilder.addField(toStringFieldSpec);
         }
 
         return specs;

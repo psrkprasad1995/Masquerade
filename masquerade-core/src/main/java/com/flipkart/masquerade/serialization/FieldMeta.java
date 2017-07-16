@@ -2,7 +2,6 @@ package com.flipkart.masquerade.serialization;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.flipkart.masquerade.util.Helper;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -66,16 +65,21 @@ public class FieldMeta {
         String getter = getGetterName(field.getName(), isBoolean(field.getType()), field.getType().isPrimitive());
         String setter = getSetterName(field.getName(), isBoolean(field.getType()));
         Method getterMethod;
-        Method setterMethod;
+        Method setterMethod = null;
         try {
             getterMethod = clazz.getMethod(getter);
-            setterMethod = clazz.getMethod(setter, field.getType());
         } catch (NoSuchMethodException e) {
-            throw new UnsupportedOperationException("A cloak-able class should have a getter and setter defined for all fields. Class: " + clazz.getName() + " Field: " + field.getName());
+            throw new UnsupportedOperationException("A cloak-able class should have a getter defined for all fields. Class: " + clazz.getName() + " Field: " + field.getName());
+        }
+
+        try {
+            setterMethod = clazz.getMethod(setter, field.getType());
+        } catch (NoSuchMethodException ignored) {
+
         }
 
         JsonProperty getterJsonProperty = getterMethod.getAnnotation(JsonProperty.class);
-        JsonProperty setterJsonProperty = setterMethod.getAnnotation(JsonProperty.class);
+        JsonProperty setterJsonProperty = Optional.ofNullable(setterMethod).map(m -> m.getAnnotation(JsonProperty.class)).orElse(null);
         JsonProperty fieldJsonProperty = field.getAnnotation(JsonProperty.class);
         return Optional.ofNullable(fieldJsonProperty).map(valueFunc)
                 .orElse(Optional.ofNullable(getterJsonProperty).map(valueFunc)
