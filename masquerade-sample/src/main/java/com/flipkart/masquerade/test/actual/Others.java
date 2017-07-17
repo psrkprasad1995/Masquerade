@@ -17,10 +17,11 @@ public class Others {
     private String isNotBoolean;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private ArrayList<String> arrayList;
-    Boolean isActiveSubscriber;
+    private Boolean isActiveSubscriber;
     private boolean value;
     private URI uri;
     private int[] ints;
+    private char[] chars;
 
     public boolean isIs() {
         return is;
@@ -92,5 +93,13 @@ public class Others {
 
     public void setInts(int[] ints) {
         this.ints = ints;
+    }
+
+    public char[] getChars() {
+        return chars;
+    }
+
+    public void setChars(char[] chars) {
+        this.chars = chars;
     }
 }

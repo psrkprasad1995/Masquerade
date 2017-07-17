@@ -90,7 +90,6 @@ public class Helper {
     public static Set<Class<?>> getPrimitivesTypes() {
         Set<Class<?>> ret = new HashSet<>();
         ret.add(Boolean.TYPE);
-        ret.add(Character.TYPE);
         ret.add(Byte.TYPE);
         ret.add(Short.TYPE);
         ret.add(Integer.TYPE);

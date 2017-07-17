@@ -22,6 +22,7 @@ public class IntegrationTest extends BaseTest {
         others.setArrayList(new ArrayList<>());
         others.setUri(URI.create("/3/product/reviews?start=0&count=3&productId=SGLEHCBEZVHH5BBF&sortOrder=MOST_HELPFUL&ratings=ALL&reviewType=ALL&reviewerType=ALL&infiniteScroll=false"));
         others.setInts(new int[] { 1, 2, 3 });
+        others.setChars(new char[] { 'a', 'b', 'c' });
 
         String serialized = cloak.hide(others, defaultEval);
         System.out.println(serialized);
