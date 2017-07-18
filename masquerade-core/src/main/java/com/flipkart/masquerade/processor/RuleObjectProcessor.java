@@ -41,6 +41,7 @@ public class RuleObjectProcessor {
     private final Configuration configuration;
     private final TypeSpec.Builder cloakBuilder;
     private final DebugProcessor debugProcessor;
+    private final FallbackProcessor fallbackProcessor;
 
     /**
      * @param configuration Configuration for the current processing cycle
@@ -50,6 +51,7 @@ public class RuleObjectProcessor {
         this.configuration = configuration;
         this.cloakBuilder = cloakBuilder;
         this.debugProcessor = new DebugProcessor(configuration, cloakBuilder);
+        this.fallbackProcessor = new FallbackProcessor(configuration, cloakBuilder);
     }
 
     /**
@@ -181,6 +183,7 @@ public class RuleObjectProcessor {
             objectMaskBuilder.endControlFlow();
         }
         debugProcessor.addDebugCollector(objectMaskBuilder);
+        fallbackProcessor.addFallbackCall(objectMaskBuilder);
         objectMaskBuilder.endControlFlow();
         objectMaskBuilder.endControlFlow();
 

@@ -23,6 +23,7 @@ import com.squareup.javapoet.TypeSpec;
 
 import static com.flipkart.masquerade.util.Helper.getNoOpImplementationName;
 import static com.flipkart.masquerade.util.Strings.OBJECT_PARAMETER;
+import static com.flipkart.masquerade.util.Strings.QUOTES;
 
 /**
  * Processor that creates a No-Op implementation class for a Mask interface
@@ -48,7 +49,12 @@ public class NoOpOverrideProcessor extends BaseOverrideProcessor {
 
         if (configuration.isNativeSerializationEnabled()) {
             methodBuilder.beginControlFlow("if ($L instanceof String)", OBJECT_PARAMETER);
-            methodBuilder.addStatement("return $S + $L + $S", "\"", OBJECT_PARAMETER, "\"");
+            methodBuilder.addStatement("return $S + $L + $S", QUOTES, OBJECT_PARAMETER, QUOTES);
+            methodBuilder.nextControlFlow("else if ($L instanceof Character)", OBJECT_PARAMETER);
+            methodBuilder.beginControlFlow("if ((char) $L == Character.valueOf('\\u0000'))", OBJECT_PARAMETER);
+            methodBuilder.addStatement("return $S", QUOTES + "\\u0000" + QUOTES);
+            methodBuilder.endControlFlow();
+            methodBuilder.addStatement("return $S + String.valueOf((char) $L) + $S", QUOTES, OBJECT_PARAMETER, QUOTES);
             methodBuilder.endControlFlow();
 
             methodBuilder.addStatement("return String.valueOf($L)", OBJECT_PARAMETER);

@@ -40,7 +40,7 @@ public class DebugProcessor {
     }
 
     public void addDebugCollector(MethodSpec.Builder objectMaskBuilder) {
-        if (!configuration.isDebugMode()) {
+        if (!configuration.isDebugMode() || configuration.fallbackFunction() != null) {
             return;
         }
 

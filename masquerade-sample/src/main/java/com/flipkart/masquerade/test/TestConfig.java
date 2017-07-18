@@ -16,9 +16,14 @@
 
 package com.flipkart.masquerade.test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.rule.*;
 import com.flipkart.masquerade.serialization.SerializationProperty;
+import com.flipkart.masquerade.util.FallbackSpecification;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -31,6 +36,12 @@ import java.util.Set;
 public class TestConfig implements Configuration {
     private static Set<Rule> rules = new HashSet<>();
     private static HashSet<SerializationProperty> serializationProperties = new HashSet<>();
+    private static ObjectMapper mapper = new ObjectMapper();
+
+    static {
+        mapper.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
+        mapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+    }
 
     static {
         Rule rule = new Rule(
@@ -79,5 +90,20 @@ public class TestConfig implements Configuration {
     @Override
     public boolean isDebugMode() {
         return false;
+    }
+
+    @Override
+    public FallbackSpecification fallbackFunction() {
+        return new FallbackSpecification(TestConfig.class, "fallback");
+    }
+
+    public static String fallback(Object o) {
+        System.out.println("Missing Class: " + o.getClass().getName());
+        try {
+            return mapper.writeValueAsString(o);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

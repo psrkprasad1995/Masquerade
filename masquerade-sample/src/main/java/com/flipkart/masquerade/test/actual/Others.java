@@ -15,6 +15,7 @@ public class Others {
     private String productSuffix;
     private Integer a;
     private String isNotBoolean;
+    private char character;
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     private ArrayList<String> arrayList;
     private Boolean isActiveSubscriber;
@@ -101,5 +102,13 @@ public class Others {
 
     public void setChars(char[] chars) {
         this.chars = chars;
+    }
+
+    public char getCharacter() {
+        return character;
+    }
+
+    public void setCharacter(char character) {
+        this.character = character;
     }
 }
