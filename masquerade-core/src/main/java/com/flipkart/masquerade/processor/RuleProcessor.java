@@ -53,7 +53,7 @@ public class RuleProcessor {
         /* Initialize all the processors */
         ReferenceMapProcessor mapProcessor = new ReferenceMapProcessor(configuration, cloakBuilder);
         InterfaceProcessor interfaceProcessor = new InterfaceProcessor(configuration, cloakBuilder);
-        RuleObjectProcessor ruleObjectProcessor = new RuleObjectProcessor(configuration, cloakBuilder);
+        RuleObjectProcessor ruleObjectProcessor = configuration.isNativeSerializationEnabled() ? new SerializationRuleObjectProcessor(configuration, cloakBuilder) : new DefaultRuleObjectProcessor(configuration, cloakBuilder);
         NoOpOverrideProcessor noOpOverrideProcessor = new NoOpOverrideProcessor(configuration, cloakBuilder);
         EnumOverrideProcessor enumOverrideProcessor = new EnumOverrideProcessor(configuration, cloakBuilder);
         ToStringProcessor toStringProcessor = new ToStringProcessor(configuration, cloakBuilder);

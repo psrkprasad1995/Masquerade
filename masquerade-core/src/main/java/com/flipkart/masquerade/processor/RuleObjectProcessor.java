@@ -23,12 +23,9 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
 import javax.lang.model.element.Modifier;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
-import static com.flipkart.masquerade.util.Helper.getPrimitivesTypes;
 import static com.flipkart.masquerade.util.Helper.getRuleInterface;
 import static com.flipkart.masquerade.util.Strings.*;
 
@@ -37,7 +34,7 @@ import static com.flipkart.masquerade.util.Strings.*;
  * <p />
  * Created by shrey.garg on 12/05/17.
  */
-public class RuleObjectProcessor {
+public abstract class RuleObjectProcessor {
     private final Configuration configuration;
     private final TypeSpec.Builder cloakBuilder;
     private final DebugProcessor debugProcessor;
@@ -69,11 +66,7 @@ public class RuleObjectProcessor {
 
         /* If a null Object is passed, return immediately */
         objectMaskBuilder.beginControlFlow("if ($L == null)", OBJECT_PARAMETER);
-        if (configuration.isNativeSerializationEnabled()) {
-            objectMaskBuilder.addStatement("return null");
-        } else {
-            objectMaskBuilder.addStatement("return");
-        }
+        handleReturnsForNullObjects(objectMaskBuilder);
         objectMaskBuilder.endControlFlow();
 
         /* Fetch the Mask implementation object from Map and assign it to an interface reference for the Rule */
@@ -86,112 +79,45 @@ public class RuleObjectProcessor {
         /* Check if the retrieved Object is present */
         objectMaskBuilder.beginControlFlow("if ($L != null)", MASKER_VARIABLE);
         /* If it is, then call the mask method for the Object */
-        if (configuration.isNativeSerializationEnabled()) {
-            objectMaskBuilder.addStatement("return $L.$L($L, $L, this)", MASKER_VARIABLE, INTERFACE_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
-        } else {
-            objectMaskBuilder.addStatement("$L.$L($L, $L, this)", MASKER_VARIABLE, INTERFACE_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
-        }
+        handleRegisteredClasses(objectMaskBuilder);
 
         objectMaskBuilder.nextControlFlow("else");
         /* Otherwise, check if the Object is an instance of Map */
         objectMaskBuilder.beginControlFlow("if ($L instanceof $T)", OBJECT_PARAMETER, Map.class);
         /* If it is, then recursively call this entry method with the List of map values */
-        if (configuration.isNativeSerializationEnabled()) {
-            objectMaskBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "{");
-
-            objectMaskBuilder.addStatement(
-                    "(($T) $L).forEach((k, v) -> $L.append($S).append(k).append($S).append($S).append(this.$L(v, $L)).append($S))",
-                    Map.class, OBJECT_PARAMETER, SERIALIZED_OBJECT, QUOTES, QUOTES, ":", ENTRY_METHOD, EVAL_PARAMETER, ",");
-
-            objectMaskBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
-            objectMaskBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-            objectMaskBuilder.endControlFlow();
-            objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "}");
-            objectMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
-        } else {
-            objectMaskBuilder.addStatement("this.$L(((Map) $L).values(), $L)", ENTRY_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
-        }
+        handleMaps(objectMaskBuilder);
 
         /* If it's not a Map, then check if the Object is a collection */
         objectMaskBuilder.nextControlFlow("else if ($L instanceof $T)", OBJECT_PARAMETER, Collection.class);
         /* If it is, then iterate over the collection */
-        if (configuration.isNativeSerializationEnabled()) {
-            objectMaskBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "[");
-        }
-        objectMaskBuilder.beginControlFlow("for (Object o : ((Collection) $L))", OBJECT_PARAMETER);
-        /* And recursively call this entry method for each object */
-        if (configuration.isNativeSerializationEnabled()) {
-            objectMaskBuilder.addStatement("$L.append(this.$L(o, $L))", SERIALIZED_OBJECT, ENTRY_METHOD, EVAL_PARAMETER);
-            objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
-        } else {
-            objectMaskBuilder.addStatement("this.$L(o, $L)", ENTRY_METHOD, EVAL_PARAMETER);
-        }
-        objectMaskBuilder.endControlFlow();
-        if (configuration.isNativeSerializationEnabled()) {
-            objectMaskBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
-            objectMaskBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-            objectMaskBuilder.endControlFlow();
-            objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
-            objectMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
-        }
+        handleCollections(objectMaskBuilder);
         /* If it's not a Collection, then check if the Object is an array */
         objectMaskBuilder.nextControlFlow("else if ($L instanceof Object[])", OBJECT_PARAMETER);
         /* If it is, then iterate over the array */
-        if (configuration.isNativeSerializationEnabled()) {
-            objectMaskBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "[");
-        }
-        objectMaskBuilder.beginControlFlow("for (Object o : ((Object[]) $L))", OBJECT_PARAMETER);
-        /* And recursively call this entry method for each object */
-        if (configuration.isNativeSerializationEnabled()) {
-            objectMaskBuilder.addStatement("$L.append(this.$L(o, $L))", SERIALIZED_OBJECT, ENTRY_METHOD, EVAL_PARAMETER);
-            objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
-        } else {
-            objectMaskBuilder.addStatement("this.$L(o, $L)", ENTRY_METHOD, EVAL_PARAMETER);
-        }
-        objectMaskBuilder.endControlFlow();
-        if (configuration.isNativeSerializationEnabled()) {
-            objectMaskBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
-            objectMaskBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-            objectMaskBuilder.endControlFlow();
-            objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
-            objectMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
-        }
+        handleObjectArrays(objectMaskBuilder);
         /* If it's not an Object[], then check if the Object is a primitive array, only if native serialization is enabled */
-        if (configuration.isNativeSerializationEnabled()) {
-            objectMaskBuilder.nextControlFlow("else if ($L.getClass().isArray())", OBJECT_PARAMETER);
-            /* Handle char[] separately */
-            objectMaskBuilder.beginControlFlow("if ($L instanceof $T[])", OBJECT_PARAMETER, Character.TYPE);
-            objectMaskBuilder.addStatement("return $S + new $T(($T[]) $L) + $S", QUOTES, String.class, Character.TYPE, OBJECT_PARAMETER, QUOTES);
-            /* Need to check for all primitive types individually */
-            List<Class<?>> primitiveTypes = new ArrayList<>(getPrimitivesTypes());
-            for (int i = 0; i < primitiveTypes.size(); i++) {
-                Class<?> primitiveType = primitiveTypes.get(i);
-                objectMaskBuilder.nextControlFlow("else if ($L instanceof $T[])", OBJECT_PARAMETER, primitiveType);
-                /* Iterate over the array */
-                objectMaskBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "[");
-                objectMaskBuilder.beginControlFlow("for ($T o : (($T[]) $L))", primitiveType, primitiveType, OBJECT_PARAMETER);
-                /* And recursively call this entry method for each object */
-                objectMaskBuilder.addStatement("$L.append(this.$L(o, $L))", SERIALIZED_OBJECT, ENTRY_METHOD, EVAL_PARAMETER);
-                objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
-                objectMaskBuilder.endControlFlow();
-                objectMaskBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
-                objectMaskBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-                objectMaskBuilder.endControlFlow();
-                objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
-                objectMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
-            }
-            objectMaskBuilder.endControlFlow();
-        }
+        handlePrimitiveArrays(objectMaskBuilder);
         debugProcessor.addDebugCollector(objectMaskBuilder);
         fallbackProcessor.addFallbackCall(objectMaskBuilder);
         objectMaskBuilder.endControlFlow();
         objectMaskBuilder.endControlFlow();
 
-        if (configuration.isNativeSerializationEnabled()) {
-            objectMaskBuilder.returns(String.class);
-            objectMaskBuilder.addStatement("return null");
-        }
+        handleReturns(objectMaskBuilder);
 
         cloakBuilder.addMethod(objectMaskBuilder.build());
     }
+
+    protected abstract void handleReturnsForNullObjects(MethodSpec.Builder objectMaskBuilder);
+
+    protected abstract void handleRegisteredClasses(MethodSpec.Builder objectMaskBuilder);
+
+    protected abstract void handleMaps(MethodSpec.Builder objectMaskBuilder);
+
+    protected abstract void handleCollections(MethodSpec.Builder objectMaskBuilder);
+
+    protected abstract void handleObjectArrays(MethodSpec.Builder objectMaskBuilder);
+
+    protected abstract void handlePrimitiveArrays(MethodSpec.Builder objectMaskBuilder);
+
+    protected abstract void handleReturns(MethodSpec.Builder objectMaskBuilder);
 }
