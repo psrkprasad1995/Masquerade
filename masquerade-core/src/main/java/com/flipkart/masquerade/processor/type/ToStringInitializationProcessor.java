@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.flipkart.masquerade.processor;
+package com.flipkart.masquerade.processor.type;
 
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.rule.Rule;

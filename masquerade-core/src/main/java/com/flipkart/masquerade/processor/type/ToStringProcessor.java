@@ -14,26 +14,27 @@
  * limitations under the License.
  */
 
-package com.flipkart.masquerade.processor;
+package com.flipkart.masquerade.processor.type;
 
 import com.flipkart.masquerade.Configuration;
+import com.flipkart.masquerade.processor.BaseOverrideProcessor;
 import com.flipkart.masquerade.rule.Rule;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
-import static com.flipkart.masquerade.util.Helper.getEnumImplementationName;
+import static com.flipkart.masquerade.util.Helper.getToStringImplementationName;
 import static com.flipkart.masquerade.util.Strings.OBJECT_PARAMETER;
 import static com.flipkart.masquerade.util.Strings.QUOTES;
 
 /**
- * Created by shrey.garg on 09/07/17.
+ * Created by shrey.garg on 16/07/17.
  */
-public class EnumOverrideProcessor extends BaseOverrideProcessor {
+public class ToStringProcessor extends BaseOverrideProcessor {
     /**
      * @param configuration Configuration for the current processing cycle
      * @param cloakBuilder  Entry class under construction for the cycle
      */
-    public EnumOverrideProcessor(Configuration configuration, TypeSpec.Builder cloakBuilder) {
+    public ToStringProcessor(Configuration configuration, TypeSpec.Builder cloakBuilder) {
         super(configuration, cloakBuilder);
     }
 
@@ -42,11 +43,11 @@ public class EnumOverrideProcessor extends BaseOverrideProcessor {
      * @return A fully constructed TypeSpec object for the enum implementation
      */
     public TypeSpec createOverride(Rule rule) {
-        String implName = getEnumImplementationName(rule);
+        String implName = getToStringImplementationName(rule);
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, Object.class);
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addStatement("return $S + String.valueOf($L) + $S", QUOTES, OBJECT_PARAMETER, QUOTES);
+            methodBuilder.addStatement("return $S + $L.toString() + $S", QUOTES, OBJECT_PARAMETER, QUOTES);
         }
 
         return generateImplementationType(rule, Object.class, implName, methodBuilder.build());
