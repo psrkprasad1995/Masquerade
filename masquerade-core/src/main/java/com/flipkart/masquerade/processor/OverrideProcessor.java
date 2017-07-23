@@ -16,15 +16,14 @@
 
 package com.flipkart.masquerade.processor;
 
-import com.fasterxml.jackson.annotation.*;
-import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.annotation.IgnoreCloak;
 import com.flipkart.masquerade.rule.*;
 import com.flipkart.masquerade.serialization.FieldMeta;
 import com.flipkart.masquerade.serialization.SerializationProperty;
 import com.flipkart.masquerade.util.FieldDescriptor;
-import com.google.common.base.Defaults;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
@@ -44,7 +43,7 @@ import static com.flipkart.masquerade.util.Strings.*;
  * <p />
  * Created by shrey.garg on 12/05/17.
  */
-public class OverrideProcessor extends BaseOverrideProcessor {
+public abstract class OverrideProcessor extends BaseOverrideProcessor {
     /**
      * @param configuration Configuration for the current processing cycle
      * @param cloakBuilder  Entry class under construction for the cycle
@@ -61,31 +60,23 @@ public class OverrideProcessor extends BaseOverrideProcessor {
      */
     public Optional<TypeSpec> createOverride(Rule rule, Class<?> clazz, CodeBlock.Builder initializer) {
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, clazz);
-
-        if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "{");
-        }
+        declareInitializeVariables(methodBuilder);
 
         /* Only consider fields for processing that are not static and remove fields that are to be ignored */
         List<Field> originalFields = getNonStaticFields(clazz).stream().filter(field -> !field.isAnnotationPresent(IgnoreCloak.class) && !field.isAnnotationPresent(JsonIgnore.class)).collect(Collectors.toList());
         List<FieldMeta> nonStaticFields = orderedFields(originalFields, clazz);
-        addSubTypeControl(clazz, nonStaticFields);
+        addSyntheticFields(clazz, nonStaticFields);
         for (FieldMeta field : nonStaticFields) {
-            if (field.getType().isPrimitive()) {
-                if (!configuration.isNativeSerializationEnabled()) {
-                    continue;
-                }
+            if (skipProcessing(field)) {
+                continue;
             }
 
-            if (configuration.isNativeSerializationEnabled()) {
-                if (field.isSynthetic()) {
-                    methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, QUOTES + field.getSerializableName() + QUOTES + ":" + QUOTES + field.getSyntheticValue() + QUOTES);
-                    methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
-                    continue;
-                }
+            if (field.isSynthetic()) {
+                handleSyntheticFields(field, methodBuilder);
+                continue;
             }
 
-            if (!field.getType().isPrimitive()) {
+            if (!skipAnnotationProcessing(field)) {
                 Class<? extends Annotation> annotationClass = rule.getAnnotationClass();
                 Annotation[] annotations = field.getField().getAnnotationsByType(annotationClass);
                 if (annotations != null && annotations.length != 0) {
@@ -95,35 +86,12 @@ public class OverrideProcessor extends BaseOverrideProcessor {
                 }
             }
 
-            if (configuration.isNativeSerializationEnabled()) {
-                resolveInclusionLevel(clazz, field);
-                if (field.getInclusionLevel() != JsonInclude.Include.ALWAYS) {
-                    CodeBlock inclusionCondition = constructInclusionCondition(field);
-                    if (field.isMaskable()) {
-                        methodBuilder.beginControlFlow("$L", inclusionCondition);
-                    }
-                }
-                methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, QUOTES + field.getSerializableName() + QUOTES + ":");
-            }
-
+            handleFieldKeys(clazz, field, methodBuilder);
             addRecursiveStatement(rule, clazz, field.getField(), methodBuilder, initializer);
-
-            if (configuration.isNativeSerializationEnabled()) {
-                methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
-                if (field.getInclusionLevel() != JsonInclude.Include.ALWAYS && field.isMaskable()) {
-                    methodBuilder.endControlFlow();
-                }
-            }
+            handleFieldValues(field, methodBuilder);
         }
 
-        if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
-            methodBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-            methodBuilder.endControlFlow();
-
-            methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "}");
-            methodBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
-        }
+        returns(methodBuilder);
 
         MethodSpec methodSpec = methodBuilder.build();
         if (methodSpec.code.isEmpty()) {
@@ -158,11 +126,7 @@ public class OverrideProcessor extends BaseOverrideProcessor {
                 addEnumInitializerCode(rule, field.getType(), initializer);
             }
 
-            if (configuration.isNativeSerializationEnabled()) {
-                methodBuilder.addStatement("$L.append($L.$L($L.$L(), $L))", SERIALIZED_OBJECT, CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, getter, EVAL_PARAMETER);
-            } else {
-                methodBuilder.addStatement("$L.$L($L.$L(), $L)", CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, getter, EVAL_PARAMETER);
-            }
+            recursiveStatement(methodBuilder, getter);
         }
     }
 
@@ -300,97 +264,21 @@ public class OverrideProcessor extends BaseOverrideProcessor {
         return -1;
     }
 
-    private void addSubTypeControl(Class<?> clazz, List<FieldMeta> fields) {
-        if (!configuration.isNativeSerializationEnabled()) {
-            return;
-        }
+    protected abstract void declareInitializeVariables(MethodSpec.Builder methodBuilder);
 
-        JsonTypeInfo jsonTypeInfo = getAnnotation(clazz, JsonTypeInfo.class);
-        JsonSubTypes jsonSubTypes = getAnnotation(clazz, JsonSubTypes.class);
-        if (jsonTypeInfo == null || jsonSubTypes == null) {
-            return;
-        }
+    protected abstract void addSyntheticFields(Class<?> clazz, List<FieldMeta> fields);
 
-        if (!jsonTypeInfo.include().equals(JsonTypeInfo.As.PROPERTY)) {
-            return;
-        }
+    protected abstract boolean skipProcessing(FieldMeta field);
 
-        Optional<JsonSubTypes.Type> subType = Arrays.stream(jsonSubTypes.value()).filter(t -> t.value().equals(clazz)).findFirst();
-        if (!subType.isPresent()) {
-            return;
-        }
+    protected abstract void handleSyntheticFields(FieldMeta field, MethodSpec.Builder methodBuilder);
 
-        fields.add(0, new FieldMeta(jsonTypeInfo.property(), clazz, subType.get().name()));
-    }
+    protected abstract boolean skipAnnotationProcessing(FieldMeta field);
 
-    private void resolveInclusionLevel(Class<?> clazz, FieldMeta fieldMeta) {
-        JsonSerialize classJsonSerialize = getAnnotation(clazz, JsonSerialize.class);
-        JsonInclude classJsonInclude = getAnnotation(clazz, JsonInclude.class);
+    protected abstract void handleFieldKeys(Class<?> clazz, FieldMeta field, MethodSpec.Builder methodBuilder);
 
-        JsonInclude.Include classInclusion = null;
-        if (classJsonInclude == null && classJsonSerialize != null) {
-            classInclusion = mapJsonSerialize(classJsonSerialize.include());
-        } else if (classJsonInclude != null) {
-            classInclusion = classJsonInclude.value();
-        }
+    protected abstract void handleFieldValues(FieldMeta field, MethodSpec.Builder methodBuilder);
 
-        JsonSerialize fieldJsonSerialize = fieldMeta.getField().getAnnotation(JsonSerialize.class);
-        JsonInclude fieldJsonInclude = fieldMeta.getField().getAnnotation(JsonInclude.class);
+    protected abstract void returns(MethodSpec.Builder methodBuilder);
 
-        JsonInclude.Include fieldInclusion = null;
-        if (fieldJsonInclude == null && fieldJsonSerialize != null) {
-            fieldInclusion = mapJsonSerialize(fieldJsonSerialize.include());
-        } else if (fieldJsonInclude != null) {
-            fieldInclusion = fieldJsonInclude.value();
-        }
-
-        fieldMeta.setInclusionLevel(Optional.ofNullable(fieldInclusion).orElse(Optional.ofNullable(classInclusion).orElse(JsonInclude.Include.ALWAYS)));
-    }
-
-    private JsonInclude.Include mapJsonSerialize(JsonSerialize.Inclusion inclusion) {
-        switch (inclusion) {
-            case NON_NULL:
-                return JsonInclude.Include.NON_NULL;
-            case NON_EMPTY:
-                return JsonInclude.Include.NON_EMPTY;
-            case NON_DEFAULT:
-                return JsonInclude.Include.NON_DEFAULT;
-            case DEFAULT_INCLUSION:
-            case ALWAYS:
-            default:
-                return JsonInclude.Include.ALWAYS;
-        }
-    }
-
-    private CodeBlock constructInclusionCondition(FieldMeta fieldMeta) {
-        Field field = fieldMeta.getField();
-        String getterName = getGetterName(field.getName(), isBoolean(field.getType()), field.getType().isPrimitive());
-        if (field.getType().isPrimitive()) {
-            if (fieldMeta.getInclusionLevel() == JsonInclude.Include.NON_DEFAULT) {
-                Object value = Defaults.defaultValue(field.getType());
-                return CodeBlock.of("if ($L.$L() != $L)", OBJECT_PARAMETER, getterName, value);
-            }
-            fieldMeta.setMaskable(false);
-            return null;
-        } else {
-            switch (fieldMeta.getInclusionLevel()) {
-                case NON_DEFAULT:
-                case NON_NULL:
-                    return CodeBlock.of("if ($L.$L() != null)", OBJECT_PARAMETER, getterName);
-                case NON_EMPTY:
-                    if (field.getType().isArray()) {
-                        return CodeBlock.of("if ($L.$L() != null && $L.$L().length > 0)", OBJECT_PARAMETER, getterName, OBJECT_PARAMETER, getterName);
-                    } else {
-                        if (getEmptiableTypes().stream().noneMatch(t -> t.isAssignableFrom(field.getType()))) {
-                            fieldMeta.setMaskable(false);
-                            return null;
-                        }
-                        return CodeBlock.of("if ($L.$L() != null && !$L.$L().isEmpty())", OBJECT_PARAMETER, getterName, OBJECT_PARAMETER, getterName);
-                    }
-                default:
-                    fieldMeta.setMaskable(false);
-                    return null;
-            }
-        }
-    }
+    protected abstract void recursiveStatement(MethodSpec.Builder methodBuilder, String getterName);
 }

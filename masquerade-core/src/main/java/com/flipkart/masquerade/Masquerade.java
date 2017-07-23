@@ -68,7 +68,7 @@ public class Masquerade {
         CodeBlock.Builder staticCode = CodeBlock.builder();
 
         RuleProcessor ruleProcessor = new RuleProcessor(configuration, builder);
-        OverrideProcessor overrideProcessor = new OverrideProcessor(configuration, builder);
+        OverrideProcessor overrideProcessor = configuration.isNativeSerializationEnabled() ? new SerializationOverrideProcessor(configuration, builder) : new DefaultOverrideProcessor(configuration, builder);
         NoOpInitializationProcessor noOpInitializationProcessor = new NoOpInitializationProcessor(configuration, builder);
         ToStringInitializationProcessor toStringInitializationProcessor = new ToStringInitializationProcessor(configuration, builder);
 
