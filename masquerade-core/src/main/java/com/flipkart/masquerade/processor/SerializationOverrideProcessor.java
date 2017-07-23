@@ -17,20 +17,20 @@
 package com.flipkart.masquerade.processor;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.serialization.FieldMeta;
+import com.flipkart.masquerade.serialization.SerializationProperty;
 import com.google.common.base.Defaults;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
 import java.lang.reflect.Field;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import static com.flipkart.masquerade.util.Helper.*;
 import static com.flipkart.masquerade.util.Strings.*;
@@ -50,6 +50,30 @@ public class SerializationOverrideProcessor extends OverrideProcessor {
     @Override
     protected void declareInitializeVariables(MethodSpec.Builder methodBuilder) {
         methodBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "{");
+    }
+
+    @Override
+    protected List<FieldMeta> enrichFieldMetas(List<FieldMeta> fieldMetas, Class<?> clazz) {
+        List<FieldMeta> sortedFields = new ArrayList<>();
+        JsonPropertyOrder propertyOrder = getAnnotation(clazz, JsonPropertyOrder.class);
+        if (propertyOrder != null && propertyOrder.value().length > 0) {
+            for (String name : propertyOrder.value()) {
+                int index = findField(name, fieldMetas);
+                if (index >= 0) {
+                    sortedFields.add(fieldMetas.remove(index));
+                }
+            }
+        }
+
+        boolean sortedAlphabetically = configuration.serializationProperties().contains(SerializationProperty.SORT_PROPERTIES_ALPHABETICALLY);
+        if (!sortedAlphabetically) {
+            sortedFields.addAll(fieldMetas);
+            return sortedFields;
+        }
+
+        fieldMetas.sort(Comparator.comparing(FieldMeta::getSerializableName));
+        sortedFields.addAll(fieldMetas);
+        return sortedFields;
     }
 
     @Override
@@ -119,8 +143,22 @@ public class SerializationOverrideProcessor extends OverrideProcessor {
     }
 
     @Override
+    protected boolean skipRecursiveCall(Field field) {
+        return false;
+    }
+
+    @Override
     protected void recursiveStatement(MethodSpec.Builder methodBuilder, String getterName) {
         methodBuilder.addStatement("$L.append($L.$L($L.$L(), $L))", SERIALIZED_OBJECT, CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, getterName, EVAL_PARAMETER);
+    }
+
+    private int findField(String name, List<FieldMeta> fields) {
+        for (int i = 0; i < fields.size(); i++) {
+            if (fields.get(i).getName().equals(name)) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     private void resolveInclusionLevel(Class<?> clazz, FieldMeta fieldMeta) {

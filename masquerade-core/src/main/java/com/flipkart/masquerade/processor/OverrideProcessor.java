@@ -17,12 +17,10 @@
 package com.flipkart.masquerade.processor;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.annotation.IgnoreCloak;
 import com.flipkart.masquerade.rule.*;
 import com.flipkart.masquerade.serialization.FieldMeta;
-import com.flipkart.masquerade.serialization.SerializationProperty;
 import com.flipkart.masquerade.util.FieldDescriptor;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
@@ -32,11 +30,14 @@ import com.squareup.javapoet.TypeSpec;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.flipkart.masquerade.util.Helper.*;
-import static com.flipkart.masquerade.util.Strings.*;
+import static com.flipkart.masquerade.util.Strings.OBJECT_PARAMETER;
 
 /**
  * Processor that creates an implementation class for a Mask interface
@@ -110,11 +111,7 @@ public abstract class OverrideProcessor extends BaseOverrideProcessor {
      * @param methodBuilder Current method builder
      */
     private void addRecursiveStatement(Rule rule, Class<?> clazz, Field field, MethodSpec.Builder methodBuilder, CodeBlock.Builder initializer) {
-        /* Does not add the statement if the field is primitive, primitive wrapper, String or an Enum */
-        if ((!field.getType().isPrimitive() &&
-                !getWrapperTypes().contains(field.getType()) &&
-                !String.class.isAssignableFrom(field.getType()) &&
-                !field.getType().isEnum()) || configuration.isNativeSerializationEnabled()) {
+        if (!skipRecursiveCall(field)) {
             String getter = getGetterName(field.getName(), isBoolean(field.getType()), field.getType().isPrimitive());
             try {
                 clazz.getMethod(getter);
@@ -225,46 +222,16 @@ public abstract class OverrideProcessor extends BaseOverrideProcessor {
 
     private List<FieldMeta> orderedFields(List<Field> fields, Class<?> clazz) {
         List<FieldMeta> fieldMetas = transform(fields, clazz);
-        if (!configuration.isNativeSerializationEnabled()) {
-            return fieldMetas;
-        }
-
-        List<FieldMeta> sortedFields = new ArrayList<>();
-        JsonPropertyOrder propertyOrder = getAnnotation(clazz, JsonPropertyOrder.class);
-        if (propertyOrder != null && propertyOrder.value().length > 0) {
-            for (String name : propertyOrder.value()) {
-                int index = findField(name, fieldMetas);
-                if (index >= 0) {
-                    sortedFields.add(fieldMetas.remove(index));
-                }
-            }
-        }
-
-        boolean sortedAlphabetically = configuration.serializationProperties().contains(SerializationProperty.SORT_PROPERTIES_ALPHABETICALLY);
-        if (!sortedAlphabetically) {
-            sortedFields.addAll(fieldMetas);
-            return sortedFields;
-        }
-
-        fieldMetas.sort(Comparator.comparing(FieldMeta::getSerializableName));
-        sortedFields.addAll(fieldMetas);
-        return sortedFields;
+        return enrichFieldMetas(fieldMetas, clazz);
     }
 
     private List<FieldMeta> transform(List<Field> fields, Class<?> clazz) {
         return fields.stream().map(field -> new FieldMeta(field, clazz)).collect(Collectors.toList());
     }
 
-    private int findField(String name, List<FieldMeta> fields) {
-        for (int i = 0; i < fields.size(); i++) {
-            if (fields.get(i).getName().equals(name)) {
-                return i;
-            }
-        }
-        return -1;
-    }
-
     protected abstract void declareInitializeVariables(MethodSpec.Builder methodBuilder);
+
+    protected abstract List<FieldMeta> enrichFieldMetas(List<FieldMeta> fieldMetas, Class<?> clazz);
 
     protected abstract void addSyntheticFields(Class<?> clazz, List<FieldMeta> fields);
 
@@ -279,6 +246,8 @@ public abstract class OverrideProcessor extends BaseOverrideProcessor {
     protected abstract void handleFieldValues(FieldMeta field, MethodSpec.Builder methodBuilder);
 
     protected abstract void returns(MethodSpec.Builder methodBuilder);
+
+    protected abstract boolean skipRecursiveCall(Field field);
 
     protected abstract void recursiveStatement(MethodSpec.Builder methodBuilder, String getterName);
 }

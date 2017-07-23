@@ -21,8 +21,10 @@ import com.flipkart.masquerade.serialization.FieldMeta;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
+import java.lang.reflect.Field;
 import java.util.List;
 
+import static com.flipkart.masquerade.util.Helper.getWrapperTypes;
 import static com.flipkart.masquerade.util.Strings.*;
 
 /**
@@ -40,6 +42,11 @@ public class DefaultOverrideProcessor extends OverrideProcessor {
     @Override
     protected void declareInitializeVariables(MethodSpec.Builder methodBuilder) {
         // Nothing needs to be initialized in this case
+    }
+
+    @Override
+    protected List<FieldMeta> enrichFieldMetas(List<FieldMeta> fieldMetas, Class<?> clazz) {
+        return fieldMetas;
     }
 
     @Override
@@ -75,6 +82,15 @@ public class DefaultOverrideProcessor extends OverrideProcessor {
     @Override
     protected void returns(MethodSpec.Builder methodBuilder) {
         // Returns nothing
+    }
+
+    @Override
+    protected boolean skipRecursiveCall(Field field) {
+        /* Does not add the statement if the field is primitive, primitive wrapper, String or an Enum */
+        return !field.getType().isPrimitive() &&
+                !getWrapperTypes().contains(field.getType()) &&
+                !String.class.isAssignableFrom(field.getType()) &&
+                !field.getType().isEnum();
     }
 
     @Override
