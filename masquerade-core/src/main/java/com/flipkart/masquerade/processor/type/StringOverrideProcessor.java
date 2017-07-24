@@ -22,36 +22,38 @@ import com.flipkart.masquerade.rule.Rule;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
-import static com.flipkart.masquerade.util.Helper.getNoOpImplementationName;
-import static com.flipkart.masquerade.util.Strings.OBJECT_PARAMETER;
-import static com.flipkart.masquerade.util.Strings.QUOTES;
+import java.util.Map;
+
+import static com.flipkart.masquerade.util.Helper.getMapImplementationName;
+import static com.flipkart.masquerade.util.Helper.getStringImplementationName;
+import static com.flipkart.masquerade.util.Strings.*;
 
 /**
- * Processor that creates a No-Op implementation class for a Mask interface
- * <p />
- * Created by shrey.garg on 27/05/17.
+ * Created by shrey.garg on 24/07/17.
  */
-public class NoOpOverrideProcessor extends BaseOverrideProcessor {
+public class StringOverrideProcessor extends BaseOverrideProcessor {
     /**
      * @param configuration Configuration for the current processing cycle
      * @param cloakBuilder  Entry class under construction for the cycle
      */
-    public NoOpOverrideProcessor(Configuration configuration, TypeSpec.Builder cloakBuilder) {
+    public StringOverrideProcessor(Configuration configuration, TypeSpec.Builder cloakBuilder) {
         super(configuration, cloakBuilder);
     }
 
     /**
      * @param rule The rule which is being processed
-     * @return A fully constructed TypeSpec object for the no op implementation
+     * @return A fully constructed TypeSpec object for the enum implementation
      */
     public TypeSpec createOverride(Rule rule) {
-        String implName = getNoOpImplementationName(rule);
-        MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, Object.class);
+        String implName = getStringImplementationName(rule);
+        MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, String.class);
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addStatement("return null");
+            methodBuilder.addStatement("return $S + $L + $S", QUOTES, OBJECT_PARAMETER, QUOTES);
+        } else {
+            // Do nothing if serialization is not enabled
         }
 
-        return generateImplementationType(rule, Object.class, implName, methodBuilder.build());
+        return generateImplementationType(rule, String.class, implName, methodBuilder.build());
     }
 }

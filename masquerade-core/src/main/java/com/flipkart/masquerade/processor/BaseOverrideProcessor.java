@@ -52,7 +52,7 @@ public abstract class BaseOverrideProcessor {
 
     /**
      * @param rule Current Rule
-     * @param clazz Current Class
+     * @param typeName Current Class
      * @return A MethodSpec builder which overrides the interface method
      */
     protected MethodSpec.Builder generateOverrideMethod(Rule rule, TypeName typeName) {
@@ -61,7 +61,7 @@ public abstract class BaseOverrideProcessor {
 
     /**
      * @param rule Current Rule
-     * @param clazz Current Class
+     * @param parameterSpec object parameter
      * @return A MethodSpec builder which overrides the interface method
      */
     private MethodSpec.Builder generateOverrideMethod(Rule rule, ParameterSpec parameterSpec) {
@@ -75,6 +75,10 @@ public abstract class BaseOverrideProcessor {
 
         if (configuration.isNativeSerializationEnabled()) {
             methodBuilder.returns(String.class);
+
+            methodBuilder.beginControlFlow("if ($L == null)", OBJECT_PARAMETER);
+            methodBuilder.addStatement("return null");
+            methodBuilder.endControlFlow();
         }
 
         return methodBuilder;
@@ -93,7 +97,7 @@ public abstract class BaseOverrideProcessor {
 
     /**
      * @param rule Current Rule
-     * @param clazz Current Class
+     * @param typeName Current Class
      * @param implName Name of the implementation class
      * @param method The overridden method the implementation class
      * @return Constructed TypeSpec for the implementation class

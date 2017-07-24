@@ -35,6 +35,29 @@ import static com.flipkart.masquerade.util.Strings.*;
  * Created by shrey.garg on 25/04/17.
  */
 public class Helper {
+    private static final Set<Class<?>> wrapperTypes = new HashSet<>();
+    private static final Set<Class<?>> primitiveTypes = new HashSet<>();
+
+    static {
+        wrapperTypes.add(Boolean.class);
+        wrapperTypes.add(Character.class);
+        wrapperTypes.add(Byte.class);
+        wrapperTypes.add(Short.class);
+        wrapperTypes.add(Integer.class);
+        wrapperTypes.add(Long.class);
+        wrapperTypes.add(Float.class);
+        wrapperTypes.add(Double.class);
+        wrapperTypes.add(Void.class);
+
+        primitiveTypes.add(Boolean.TYPE);
+        primitiveTypes.add(Byte.TYPE);
+        primitiveTypes.add(Short.TYPE);
+        primitiveTypes.add(Integer.TYPE);
+        primitiveTypes.add(Long.TYPE);
+        primitiveTypes.add(Float.TYPE);
+        primitiveTypes.add(Double.TYPE);
+    }
+
     public static String getSetterName(String name, boolean isBoolean) {
         String capitalizedName = capitalize(name);
         String prefix = "set";
@@ -74,29 +97,11 @@ public class Helper {
     }
 
     public static Set<Class<?>> getWrapperTypes() {
-        Set<Class<?>> ret = new HashSet<>();
-        ret.add(Boolean.class);
-        ret.add(Character.class);
-        ret.add(Byte.class);
-        ret.add(Short.class);
-        ret.add(Integer.class);
-        ret.add(Long.class);
-        ret.add(Float.class);
-        ret.add(Double.class);
-        ret.add(Void.class);
-        return ret;
+        return wrapperTypes;
     }
 
     public static Set<Class<?>> getPrimitivesTypes() {
-        Set<Class<?>> ret = new HashSet<>();
-        ret.add(Boolean.TYPE);
-        ret.add(Byte.TYPE);
-        ret.add(Short.TYPE);
-        ret.add(Integer.TYPE);
-        ret.add(Long.TYPE);
-        ret.add(Float.TYPE);
-        ret.add(Double.TYPE);
-        return ret;
+        return primitiveTypes;
     }
 
     public static Set<Class<?>> getEmptiableTypes() {
@@ -151,6 +156,10 @@ public class Helper {
         return generateImplementationName(rule, "Map");
     }
 
+    public static String getStringImplementationName(Rule rule) {
+        return generateImplementationName(rule, "String");
+    }
+
     public static String getCollectionImplementationName(Rule rule) {
         return generateImplementationName(rule, "Collection");
     }
@@ -161,6 +170,10 @@ public class Helper {
 
     public static String getPrimitiveArrayImplementationName(Rule rule, Class<?> clazz) {
         return generateImplementationName(rule, capitalize(clazz.getSimpleName()) + "ArrayPrimitive");
+    }
+
+    public static String getPrimitiveImplementationName(Rule rule, Class<?> clazz) {
+        return generateImplementationName(rule, capitalize(clazz.getSimpleName()));
     }
 
     public static ClassName getNoOpImplementationClass(Configuration configuration, Rule rule) {
@@ -187,8 +200,16 @@ public class Helper {
         return ClassName.get(configuration.getCloakPackage(), getObjectArrayImplementationName(rule));
     }
 
+    public static ClassName getStringImplementationClass(Configuration configuration, Rule rule) {
+        return ClassName.get(configuration.getCloakPackage(), getStringImplementationName(rule));
+    }
+
     public static ClassName getPrimitiveArrayImplementationClass(Configuration configuration, Rule rule, Class<?> clazz) {
         return ClassName.get(configuration.getCloakPackage(), getPrimitiveArrayImplementationName(rule, clazz));
+    }
+
+    public static ClassName getPrimitiveImplementationClass(Configuration configuration, Rule rule, Class<?> clazz) {
+        return ClassName.get(configuration.getCloakPackage(), getPrimitiveImplementationName(rule, clazz));
     }
 
     private static String generateImplementationName(Rule rule, String prefix) {
@@ -231,8 +252,16 @@ public class Helper {
         return "objectArray" + rule.getName();
     }
 
+    public static String getStringVariableName(Rule rule) {
+        return "string" + rule.getName();
+    }
+
     public static String getPrimitiveArrayVariableName(Rule rule, Class<?> clazz) {
         return clazz.getSimpleName().toLowerCase() + "ArrayPrimitive" + rule.getName();
+    }
+
+    public static String getPrimitiveVariableName(Rule rule, Class<?> clazz) {
+        return clazz.getSimpleName().toLowerCase() + rule.getName();
     }
 
     public static Set<ClassPath.ClassInfo> getPackageClasses(ClassLoader classLoader, List<String> packagesToScan) throws IOException {

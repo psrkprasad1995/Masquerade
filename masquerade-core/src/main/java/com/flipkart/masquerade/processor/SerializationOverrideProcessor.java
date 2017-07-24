@@ -22,9 +22,11 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.flipkart.masquerade.Configuration;
+import com.flipkart.masquerade.rule.Rule;
 import com.flipkart.masquerade.serialization.FieldMeta;
 import com.flipkart.masquerade.serialization.SerializationProperty;
 import com.google.common.base.Defaults;
+import com.google.common.primitives.Primitives;
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
@@ -148,7 +150,31 @@ public class SerializationOverrideProcessor extends OverrideProcessor {
     }
 
     @Override
-    protected void recursiveStatement(MethodSpec.Builder methodBuilder, String getterName) {
+    protected void recursiveStatement(Rule rule, MethodSpec.Builder methodBuilder, Class<?> clazz, String getterName) {
+        if (clazz.isArray()) {
+            if (clazz.getComponentType().isPrimitive()) {
+                addRecursiveStatement(methodBuilder, getPrimitiveArrayVariableName(rule, clazz.getComponentType()), getterName);
+            } else {
+                addRecursiveStatement(methodBuilder, getObjectArrayVariableName(rule), getterName);
+            }
+        } else if (String.class.isAssignableFrom(clazz)) {
+            addRecursiveStatement(methodBuilder, getStringVariableName(rule), getterName);
+        } else if (Map.class.isAssignableFrom(clazz)) {
+            addRecursiveStatement(methodBuilder, getMapVariableName(rule), getterName);
+        } else if (Collection.class.isAssignableFrom(clazz)) {
+            addRecursiveStatement(methodBuilder, getCollectionVariableName(rule), getterName);
+        } else if (clazz.isPrimitive() || getWrapperTypes().contains(clazz)) {
+            addRecursiveStatement(methodBuilder, getPrimitiveVariableName(rule, Primitives.wrap(clazz)), getterName);
+        } else {
+            addDefaultRecursiveStatement(methodBuilder, getterName);
+        }
+    }
+
+    private void addRecursiveStatement(MethodSpec.Builder methodBuilder, String methodName, String getterName) {
+        methodBuilder.addStatement("$L.append($L.$L().$L($L.$L(), $L, $L, $L))", SERIALIZED_OBJECT, SET_PARAMETER, methodName, INTERFACE_METHOD, OBJECT_PARAMETER, getterName, EVAL_PARAMETER, CLOAK_PARAMETER, SET_PARAMETER);
+    }
+
+    private void addDefaultRecursiveStatement(MethodSpec.Builder methodBuilder, String getterName) {
         methodBuilder.addStatement("$L.append($L.$L($L.$L(), $L))", SERIALIZED_OBJECT, CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, getterName, EVAL_PARAMETER);
     }
 

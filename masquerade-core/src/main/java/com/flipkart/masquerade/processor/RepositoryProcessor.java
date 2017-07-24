@@ -17,7 +17,6 @@
 package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
-import com.flipkart.masquerade.processor.type.NoOpInitializationProcessor;
 import com.flipkart.masquerade.processor.type.ToStringInitializationProcessor;
 import com.flipkart.masquerade.rule.Rule;
 import com.flipkart.masquerade.util.EntryType;
@@ -38,7 +37,6 @@ public class RepositoryProcessor {
     private final Configuration configuration;
     private final TypeSpec.Builder cloakBuilder;
 
-    private final NoOpInitializationProcessor noOpInitializationProcessor;
     private final ToStringInitializationProcessor toStringInitializationProcessor;
     private final ReferenceMapProcessor mapProcessor;
 
@@ -49,7 +47,6 @@ public class RepositoryProcessor {
     public RepositoryProcessor(Configuration configuration, TypeSpec.Builder cloakBuilder) {
         this.configuration = configuration;
         this.cloakBuilder = cloakBuilder;
-        this.noOpInitializationProcessor = new NoOpInitializationProcessor(configuration, cloakBuilder);
         this.toStringInitializationProcessor = new ToStringInitializationProcessor(configuration, cloakBuilder);
         this.mapProcessor = new ReferenceMapProcessor(configuration, cloakBuilder);
     }
@@ -79,7 +76,8 @@ public class RepositoryProcessor {
                     .initializer("new $T()", getEnumImplementationClass(configuration, rule)).build();
             repositoryBuilder.addField(enumFieldSpec);
 
-            handleNoOpEntries(repositoryBuilder, rule, initializer);
+            handlePrimitiveEntries(repositoryBuilder, rule, initializer);
+            handleStringEntry(repositoryBuilder, rule, initializer);
             handleToStringEntries(repositoryBuilder, rule, initializer);
             handleProcessedEntries(repositoryBuilder, initializer, repositoryEntries);
             handleMapEntry(repositoryBuilder, rule, initializer);
@@ -101,12 +99,20 @@ public class RepositoryProcessor {
                 .forEach(re -> initializer.addStatement("$L.put($S, $L)", rule.getName(), re.getClazz().getName(), getToStringVariableName(rule)));
     }
 
-    private void handleNoOpEntries(TypeSpec.Builder repositoryBuilder, Rule rule, CodeBlock.Builder initializer) {
-        handleEntry(repositoryBuilder, initializer,
-                getNoOpImplementationClass(configuration, rule), getNoOpVariableName(rule));
+    private void handlePrimitiveEntries(TypeSpec.Builder repositoryBuilder, Rule rule, CodeBlock.Builder initializer) {
+        for (Class<?> wrapperType : getWrapperTypes()) {
+            handleEntry(repositoryBuilder, initializer,
+                    getPrimitiveImplementationClass(configuration, rule, wrapperType), getPrimitiveVariableName(rule, wrapperType));
 
-        noOpInitializationProcessor.generateNoOpEntries(rule)
-                .forEach(re -> initializer.addStatement("$L.put($S, $L)", rule.getName(), re.getClazz().getName(), getNoOpVariableName(rule)));
+            initializer.addStatement("$L.put($S, $L)", rule.getName(), wrapperType.getName(), getPrimitiveVariableName(rule, wrapperType));
+        }
+    }
+
+    private void handleStringEntry(TypeSpec.Builder repositoryBuilder, Rule rule, CodeBlock.Builder initializer) {
+        handleEntry(repositoryBuilder, initializer,
+                getStringImplementationClass(configuration, rule), getStringVariableName(rule));
+
+        initializer.addStatement("$L.put($S, $L)", rule.getName(), String.class.getName(), getStringVariableName(rule));
     }
 
     private void handleMapEntry(TypeSpec.Builder repositoryBuilder, Rule rule, CodeBlock.Builder initializer) {

@@ -126,7 +126,7 @@ public abstract class OverrideProcessor extends BaseOverrideProcessor {
                 addEnumInitializerCode(rule, field.getType(), repositoryEntries);
             }
 
-            recursiveStatement(methodBuilder, getter);
+            recursiveStatement(rule, methodBuilder, field.getType(), getter);
         }
     }
 
@@ -251,5 +251,5 @@ public abstract class OverrideProcessor extends BaseOverrideProcessor {
 
     protected abstract boolean skipRecursiveCall(Field field);
 
-    protected abstract void recursiveStatement(MethodSpec.Builder methodBuilder, String getterName);
+    protected abstract void recursiveStatement(Rule rule, MethodSpec.Builder methodBuilder, Class<?> clazz, String getterName);
 }
