@@ -73,7 +73,7 @@ public class Masquerade {
         ToStringInitializationProcessor toStringInitializationProcessor = new ToStringInitializationProcessor(configuration, builder);
 
         DebugProcessor debugProcessor = new DebugProcessor(configuration, builder);
-        debugProcessor.addConstructor();
+        debugProcessor.addGetter();
 
         configuration.getRules().forEach(rule -> noOpInitializationProcessor.generateNoOpEntries(rule, staticCode));
         configuration.getRules().forEach(rule -> toStringInitializationProcessor.generateToStringEntries(rule, staticCode));

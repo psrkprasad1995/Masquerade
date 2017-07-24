@@ -21,16 +21,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import org.test.veils.Cloak;
 
-import java.util.HashSet;
-import java.util.Set;
-
 /**
  * Created by shrey.garg on 09/07/17.
  */
 public class BaseTest {
     protected static final ObjectMapper mapper = new ObjectMapper();
-    protected Set<String> missingClasses = new HashSet<>();
-    /* Pass missingClasses to the Cloak constructor when debug mode is on */
     protected final Cloak cloak = new Cloak();
     protected final Eval defaultEval = new Eval(Platform.ANDROID, 199);
 

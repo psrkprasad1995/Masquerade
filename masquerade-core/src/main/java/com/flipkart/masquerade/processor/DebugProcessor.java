@@ -17,12 +17,14 @@
 package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.ParameterizedTypeName;
 import com.squareup.javapoet.TypeSpec;
 
 import javax.lang.model.element.Modifier;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static com.flipkart.masquerade.util.Strings.DEBUG_LIST;
 import static com.flipkart.masquerade.util.Strings.OBJECT_PARAMETER;
@@ -43,16 +45,18 @@ public class DebugProcessor {
         this.cloakBuilder = cloakBuilder;
     }
 
-    public void addConstructor() {
+    public void addGetter() {
         if (!configuration.isDebugMode()) {
             return;
         }
 
-        cloakBuilder.addField(ParameterizedTypeName.get(Set.class, String.class), DEBUG_LIST, Modifier.PRIVATE, Modifier.FINAL);
-        cloakBuilder.addMethod(MethodSpec.constructorBuilder()
+        cloakBuilder.addField(FieldSpec
+                .builder(ParameterizedTypeName.get(Set.class, String.class), DEBUG_LIST, Modifier.PRIVATE, Modifier.FINAL)
+                .initializer("$T.newKeySet()", ConcurrentHashMap.class).build());
+        cloakBuilder.addMethod(MethodSpec.methodBuilder("getMissingClasses")
                 .addModifiers(Modifier.PUBLIC)
-                .addParameter(ParameterizedTypeName.get(Set.class, String.class), DEBUG_LIST, Modifier.FINAL)
-                .addStatement("this.$L = $L", DEBUG_LIST, DEBUG_LIST).build());
+                .returns(ParameterizedTypeName.get(Set.class, String.class))
+                .addStatement("return $L", DEBUG_LIST).build());
     }
 
     public void addDebugCollector(MethodSpec.Builder objectMaskBuilder) {

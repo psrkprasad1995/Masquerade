@@ -20,6 +20,8 @@ import com.flipkart.masquerade.test.actual.Four;
 import com.flipkart.masquerade.test.actual.debug.Unregistered;
 import org.junit.jupiter.api.Test;
 
+import java.util.Set;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
@@ -38,6 +40,7 @@ public class DebugModeTest extends BaseTest {
 //        String serialized = cloak.hide(unregistered, defaultEval);
 //        System.out.println(serialized);
 //
+//        Set<String> missingClasses = cloak.getMissingClasses();
 //        assertEquals(1, missingClasses.size());
 //        assertEquals(NotIncluded.class.getName(), missingClasses.toArray()[0]);
 //    }
