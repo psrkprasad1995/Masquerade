@@ -165,6 +165,10 @@ public class SerializationOverrideProcessor extends OverrideProcessor {
             addRecursiveStatement(methodBuilder, getCollectionVariableName(rule), getterName);
         } else if (clazz.isPrimitive() || getWrapperTypes().contains(clazz)) {
             addRecursiveStatement(methodBuilder, getPrimitiveVariableName(rule, Primitives.wrap(clazz)), getterName);
+        } else if (configuration.toStringSerializableClasses().contains(clazz)) {
+            addRecursiveStatement(methodBuilder, getToStringVariableName(rule), getterName);
+        } else if (clazz.isEnum()) {
+            addRecursiveStatement(methodBuilder, getEnumVariableName(rule), getterName);
         } else {
             addDefaultRecursiveStatement(methodBuilder, getterName);
         }

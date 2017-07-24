@@ -72,10 +72,8 @@ public class RepositoryProcessor {
         for (Rule rule : configuration.getRules()) {
             /* Creates a Map of Class name and Mask */
             mapProcessor.addMap(rule, repositoryBuilder);
-            FieldSpec enumFieldSpec = FieldSpec.builder(getRuleInterface(configuration, rule), getEnumVariableName(rule), Modifier.PRIVATE)
-                    .initializer("new $T()", getEnumImplementationClass(configuration, rule)).build();
-            repositoryBuilder.addField(enumFieldSpec);
 
+            handleEnumEntry(repositoryBuilder, rule, initializer);
             handlePrimitiveEntries(repositoryBuilder, rule, initializer);
             handleStringEntry(repositoryBuilder, rule, initializer);
             handleToStringEntries(repositoryBuilder, rule, initializer);
@@ -89,6 +87,11 @@ public class RepositoryProcessor {
 
         repositoryBuilder.addInitializerBlock(initializer.build());
         return repositoryBuilder.build();
+    }
+
+    private void handleEnumEntry(TypeSpec.Builder repositoryBuilder, Rule rule, CodeBlock.Builder initializer) {
+        handleEntry(repositoryBuilder, initializer,
+                getEnumImplementationClass(configuration, rule), getEnumVariableName(rule));
     }
 
     private void handleToStringEntries(TypeSpec.Builder repositoryBuilder, Rule rule, CodeBlock.Builder initializer) {
