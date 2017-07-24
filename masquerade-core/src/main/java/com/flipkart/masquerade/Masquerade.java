@@ -69,7 +69,7 @@ public class Masquerade {
         repositoryProcessor.createReference();
 
         DebugProcessor debugProcessor = new DebugProcessor(configuration, builder);
-        debugProcessor.addConstructor();
+        debugProcessor.addGetter();
 
         specs.addAll(ruleProcessor.generateRuleTypeSpecs());
 
