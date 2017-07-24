@@ -119,6 +119,10 @@ public class Helper {
         return ClassName.get(configuration.getCloakPackage(), rule.getName() + INTERFACE_SUFFIX);
     }
 
+    public static ClassName getRepositoryClass(Configuration configuration) {
+        return ClassName.get(configuration.getCloakPackage(), SET_CLASS);
+    }
+
     public static String getInterfaceName(Rule rule) {
         return rule.getName() + INTERFACE_SUFFIX;
     }

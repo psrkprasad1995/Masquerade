@@ -16,6 +16,7 @@
 
 package com.flipkart.masquerade.test.actual;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flipkart.masquerade.test.NotIncluded;
 
 import java.util.List;
@@ -24,7 +25,9 @@ import java.util.List;
  * Created by shrey.garg on 18/07/17.
  */
 public class Fallback {
+    @JsonIgnore
     private NotIncluded notIncluded;
+    @JsonIgnore
     private List<Object> objects;
     private String string;
 

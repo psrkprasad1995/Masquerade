@@ -18,10 +18,13 @@ package com.flipkart.masquerade.processor.type;
 
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.rule.Rule;
-import com.squareup.javapoet.CodeBlock;
+import com.flipkart.masquerade.util.EntryType;
+import com.flipkart.masquerade.util.RepositoryEntry;
 import com.squareup.javapoet.TypeSpec;
 
-import static com.flipkart.masquerade.util.Helper.getNoOpVariableName;
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.flipkart.masquerade.util.Helper.getWrapperTypes;
 
 /**
@@ -45,10 +48,12 @@ public class NoOpInitializationProcessor {
     /**
      * @param rule The rule to generate the entries for
      */
-    public void generateNoOpEntries(Rule rule, CodeBlock.Builder initializer) {
+    public List<RepositoryEntry> generateNoOpEntries(Rule rule) {
+        List<RepositoryEntry> repositoryEntries = new ArrayList<>();
         for (Class<?> clazz : getWrapperTypes()) {
-            initializer.addStatement("$L.put($S, $L)", rule.getName(), clazz.getName(), getNoOpVariableName(rule));
+            repositoryEntries.add(new RepositoryEntry(rule, clazz, EntryType.NoOP));
         }
-        initializer.addStatement("$L.put($S, $L)", rule.getName(), String.class.getName(), getNoOpVariableName(rule));
+        repositoryEntries.add(new RepositoryEntry(rule, String.class, EntryType.NoOP));
+        return repositoryEntries;
     }
 }

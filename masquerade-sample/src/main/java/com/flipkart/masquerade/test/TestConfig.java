@@ -16,7 +16,6 @@
 
 package com.flipkart.masquerade.test;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -99,11 +98,11 @@ public class TestConfig implements Configuration {
 
     public static String fallback(Object o) {
         System.out.println("Missing Class: " + o.getClass().getName());
-        try {
-            return mapper.writeValueAsString(o);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
+//        try {
+//            return mapper.writeValueAsString(o);
+//        } catch (JsonProcessingException e) {
+//            e.printStackTrace();
             return null;
-        }
+//        }
     }
 }

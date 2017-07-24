@@ -23,14 +23,10 @@ import com.flipkart.masquerade.processor.type.ToStringProcessor;
 import com.flipkart.masquerade.rule.Rule;
 import com.flipkart.masquerade.util.TypeSpecContainer;
 import com.flipkart.masquerade.util.Verifier;
-import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.TypeSpec;
 
-import javax.lang.model.element.Modifier;
 import java.util.ArrayList;
 import java.util.List;
-
-import static com.flipkart.masquerade.util.Helper.*;
 
 /**
  * Processor that processes Rule level implementations
@@ -78,16 +74,6 @@ public class RuleProcessor {
             specs.add(new TypeSpecContainer(configuration.getCloakPackage(), enumOverrideProcessor.createOverride(rule)));
             /* Creates a ToString implementation for each Rule which can be used for any class which needs to be serialized by calling toString() */
             specs.add(new TypeSpecContainer(configuration.getCloakPackage(), toStringProcessor.createOverride(rule)));
-            /* Create a NoOP Mask field */
-            FieldSpec fieldSpec = FieldSpec.builder(getRuleInterface(configuration, rule), getNoOpVariableName(rule), Modifier.PRIVATE)
-                    .initializer("new $T()", getNoOpImplementationClass(configuration, rule)).build();
-            cloakBuilder.addField(fieldSpec);
-            FieldSpec enumFieldSpec = FieldSpec.builder(getRuleInterface(configuration, rule), getEnumVariableName(rule), Modifier.PRIVATE)
-                    .initializer("new $T()", getEnumImplementationClass(configuration, rule)).build();
-            cloakBuilder.addField(enumFieldSpec);
-            FieldSpec toStringFieldSpec = FieldSpec.builder(getRuleInterface(configuration, rule), getToStringVariableName(rule), Modifier.PRIVATE)
-                    .initializer("new $T()", getToStringImplementationClass(configuration, rule)).build();
-            cloakBuilder.addField(toStringFieldSpec);
         }
 
         return specs;

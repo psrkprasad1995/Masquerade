@@ -40,7 +40,7 @@ public class FallbackProcessor {
     }
 
     public void addFallbackCall(MethodSpec.Builder objectMaskBuilder) {
-        if (configuration.fallbackFunction() == null) {
+        if (!configuration.isNativeSerializationEnabled() || configuration.fallbackFunction() == null) {
             return;
         }
 
