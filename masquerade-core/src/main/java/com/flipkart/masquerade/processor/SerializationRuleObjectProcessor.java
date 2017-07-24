@@ -17,14 +17,17 @@
 package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
+import com.flipkart.masquerade.rule.Rule;
+import com.squareup.javapoet.ArrayTypeName;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
-import static com.flipkart.masquerade.util.Helper.getPrimitivesTypes;
+import static com.flipkart.masquerade.util.Helper.*;
 import static com.flipkart.masquerade.util.Strings.*;
 
 /**
@@ -46,77 +49,36 @@ public class SerializationRuleObjectProcessor extends RuleObjectProcessor {
 
     @Override
     protected void handleRegisteredClasses(MethodSpec.Builder objectMaskBuilder) {
-        objectMaskBuilder.addStatement("return $L.$L($L, $L, this)", MASKER_VARIABLE, INTERFACE_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
+        objectMaskBuilder.addStatement("return $L.$L($L, $L, this, $L)", MASKER_VARIABLE, INTERFACE_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER);
     }
 
     @Override
-    protected void handleMaps(MethodSpec.Builder objectMaskBuilder) {
-        objectMaskBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "{");
-
-        objectMaskBuilder.addStatement(
-                "(($T) $L).forEach((k, v) -> $L.append($S).append(k).append($S).append($S).append(this.$L(v, $L)).append($S))",
-                Map.class, OBJECT_PARAMETER, SERIALIZED_OBJECT, QUOTES, QUOTES, ":", ENTRY_METHOD, EVAL_PARAMETER, ",");
-
-        objectMaskBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
-        objectMaskBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-        objectMaskBuilder.endControlFlow();
-        objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "}");
-        objectMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
+    protected void handleMaps(Rule rule, MethodSpec.Builder objectMaskBuilder) {
+        objectMaskBuilder.addStatement("return $L.$L().$L(($T) $L, $L, this, $L)", SET_PARAMETER, getMapVariableName(rule), INTERFACE_METHOD, Map.class, OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER);
     }
 
     @Override
-    protected void handleCollections(MethodSpec.Builder objectMaskBuilder) {
-        objectMaskBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "[");
-        objectMaskBuilder.beginControlFlow("for (Object o : ((Collection) $L))", OBJECT_PARAMETER);
-        /* And recursively call this entry method for each object */
-        objectMaskBuilder.addStatement("$L.append(this.$L(o, $L))", SERIALIZED_OBJECT, ENTRY_METHOD, EVAL_PARAMETER);
-        objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
-        objectMaskBuilder.endControlFlow();
-        objectMaskBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
-        objectMaskBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-        objectMaskBuilder.endControlFlow();
-        objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
-        objectMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
+    protected void handleCollections(Rule rule, MethodSpec.Builder objectMaskBuilder) {
+        objectMaskBuilder.addStatement("return $L.$L().$L(($T) $L, $L, this, $L)", SET_PARAMETER, getCollectionVariableName(rule), INTERFACE_METHOD, Collection.class, OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER);
     }
 
     @Override
-    protected void handleObjectArrays(MethodSpec.Builder objectMaskBuilder) {
-        objectMaskBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "[");
-        objectMaskBuilder.beginControlFlow("for (Object o : ((Object[]) $L))", OBJECT_PARAMETER);
-        /* And recursively call this entry method for each object */
-        objectMaskBuilder.addStatement("$L.append(this.$L(o, $L))", SERIALIZED_OBJECT, ENTRY_METHOD, EVAL_PARAMETER);
-        objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
-        objectMaskBuilder.endControlFlow();
-        objectMaskBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
-        objectMaskBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-        objectMaskBuilder.endControlFlow();
-        objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
-        objectMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
+    protected void handleObjectArrays(Rule rule, MethodSpec.Builder objectMaskBuilder) {
+        objectMaskBuilder.addStatement("return $L.$L().$L(($T) $L, $L, this, $L)", SET_PARAMETER, getObjectArrayVariableName(rule), INTERFACE_METHOD, ArrayTypeName.of(Object.class), OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER);
     }
 
     @Override
-    protected void handlePrimitiveArrays(MethodSpec.Builder objectMaskBuilder) {
+    protected void handlePrimitiveArrays(Rule rule, MethodSpec.Builder objectMaskBuilder) {
         objectMaskBuilder.nextControlFlow("else if ($L.getClass().isArray())", OBJECT_PARAMETER);
         /* Handle char[] separately */
         objectMaskBuilder.beginControlFlow("if ($L instanceof $T[])", OBJECT_PARAMETER, Character.TYPE);
-        objectMaskBuilder.addStatement("return $S + new $T(($T[]) $L) + $S", QUOTES, String.class, Character.TYPE, OBJECT_PARAMETER, QUOTES);
+        objectMaskBuilder.addStatement("return $L.$L().$L(($T) $L, $L, this, $L)", SET_PARAMETER, getPrimitiveArrayVariableName(rule, Character.TYPE), INTERFACE_METHOD, ArrayTypeName.of(Character.TYPE), OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER);
         /* Need to check for all primitive types individually */
         List<Class<?>> primitiveTypes = new ArrayList<>(getPrimitivesTypes());
         for (int i = 0; i < primitiveTypes.size(); i++) {
             Class<?> primitiveType = primitiveTypes.get(i);
             objectMaskBuilder.nextControlFlow("else if ($L instanceof $T[])", OBJECT_PARAMETER, primitiveType);
-            /* Iterate over the array */
-            objectMaskBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "[");
-            objectMaskBuilder.beginControlFlow("for ($T o : (($T[]) $L))", primitiveType, primitiveType, OBJECT_PARAMETER);
-            /* And recursively call this entry method for each object */
-            objectMaskBuilder.addStatement("$L.append(this.$L(o, $L))", SERIALIZED_OBJECT, ENTRY_METHOD, EVAL_PARAMETER);
-            objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
-            objectMaskBuilder.endControlFlow();
-            objectMaskBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
-            objectMaskBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-            objectMaskBuilder.endControlFlow();
-            objectMaskBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
-            objectMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
+            objectMaskBuilder.addStatement("return $L.$L().$L(($T) $L, $L, this, $L)", SET_PARAMETER, getPrimitiveArrayVariableName(rule, primitiveType), INTERFACE_METHOD, ArrayTypeName.of(primitiveType), OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER);
         }
         objectMaskBuilder.endControlFlow();
     }

@@ -26,6 +26,7 @@ import javax.lang.model.element.Modifier;
 
 import static com.flipkart.masquerade.util.Helper.getEntryClass;
 import static com.flipkart.masquerade.util.Helper.getInterfaceName;
+import static com.flipkart.masquerade.util.Helper.getRepositoryClass;
 import static com.flipkart.masquerade.util.Strings.*;
 
 /**
@@ -60,6 +61,7 @@ public class InterfaceProcessor {
         methodBuilder.addParameter(TypeVariableName.get("T"), OBJECT_PARAMETER);
         methodBuilder.addParameter(rule.getEvaluatorClass(), EVAL_PARAMETER);
         methodBuilder.addParameter(getEntryClass(configuration), CLOAK_PARAMETER);
+        methodBuilder.addParameter(getRepositoryClass(configuration), SET_PARAMETER);
 
         if (configuration.isNativeSerializationEnabled()) {
             methodBuilder.returns(String.class);

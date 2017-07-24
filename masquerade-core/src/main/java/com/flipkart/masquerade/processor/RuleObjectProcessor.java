@@ -85,18 +85,18 @@ public abstract class RuleObjectProcessor {
         /* Otherwise, check if the Object is an instance of Map */
         objectMaskBuilder.beginControlFlow("if ($L instanceof $T)", OBJECT_PARAMETER, Map.class);
         /* If it is, then recursively call this entry method with the List of map values */
-        handleMaps(objectMaskBuilder);
+        handleMaps(rule, objectMaskBuilder);
 
         /* If it's not a Map, then check if the Object is a collection */
         objectMaskBuilder.nextControlFlow("else if ($L instanceof $T)", OBJECT_PARAMETER, Collection.class);
         /* If it is, then iterate over the collection */
-        handleCollections(objectMaskBuilder);
+        handleCollections(rule, objectMaskBuilder);
         /* If it's not a Collection, then check if the Object is an array */
         objectMaskBuilder.nextControlFlow("else if ($L instanceof Object[])", OBJECT_PARAMETER);
         /* If it is, then iterate over the array */
-        handleObjectArrays(objectMaskBuilder);
+        handleObjectArrays(rule, objectMaskBuilder);
         /* If it's not an Object[], then check if the Object is a primitive array, only if native serialization is enabled */
-        handlePrimitiveArrays(objectMaskBuilder);
+        handlePrimitiveArrays(rule, objectMaskBuilder);
         debugProcessor.addDebugCollector(objectMaskBuilder);
         fallbackProcessor.addFallbackCall(objectMaskBuilder);
         objectMaskBuilder.endControlFlow();
@@ -111,13 +111,13 @@ public abstract class RuleObjectProcessor {
 
     protected abstract void handleRegisteredClasses(MethodSpec.Builder objectMaskBuilder);
 
-    protected abstract void handleMaps(MethodSpec.Builder objectMaskBuilder);
+    protected abstract void handleMaps(Rule rule, MethodSpec.Builder objectMaskBuilder);
 
-    protected abstract void handleCollections(MethodSpec.Builder objectMaskBuilder);
+    protected abstract void handleCollections(Rule rule, MethodSpec.Builder objectMaskBuilder);
 
-    protected abstract void handleObjectArrays(MethodSpec.Builder objectMaskBuilder);
+    protected abstract void handleObjectArrays(Rule rule, MethodSpec.Builder objectMaskBuilder);
 
-    protected abstract void handlePrimitiveArrays(MethodSpec.Builder objectMaskBuilder);
+    protected abstract void handlePrimitiveArrays(Rule rule, MethodSpec.Builder objectMaskBuilder);
 
     protected abstract void handleReturns(MethodSpec.Builder objectMaskBuilder);
 }

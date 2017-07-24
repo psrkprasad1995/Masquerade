@@ -17,9 +17,7 @@
 package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
-import com.flipkart.masquerade.processor.type.EnumOverrideProcessor;
-import com.flipkart.masquerade.processor.type.NoOpOverrideProcessor;
-import com.flipkart.masquerade.processor.type.ToStringProcessor;
+import com.flipkart.masquerade.processor.type.*;
 import com.flipkart.masquerade.rule.Rule;
 import com.flipkart.masquerade.util.TypeSpecContainer;
 import com.flipkart.masquerade.util.Verifier;
@@ -27,6 +25,7 @@ import com.squareup.javapoet.TypeSpec;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Processor that processes Rule level implementations
@@ -56,6 +55,11 @@ public class RuleProcessor {
         NoOpOverrideProcessor noOpOverrideProcessor = new NoOpOverrideProcessor(configuration, cloakBuilder);
         EnumOverrideProcessor enumOverrideProcessor = new EnumOverrideProcessor(configuration, cloakBuilder);
         ToStringProcessor toStringProcessor = new ToStringProcessor(configuration, cloakBuilder);
+        MapOverrideProcessor mapOverrideProcessor = new MapOverrideProcessor(configuration, cloakBuilder);
+        CollectionOverrideProcessor collectionOverrideProcessor = new CollectionOverrideProcessor(configuration, cloakBuilder);
+        ObjectArrayOverrideProcessor objectArrayOverrideProcessor = new ObjectArrayOverrideProcessor(configuration, cloakBuilder);
+        PrimitiveArrayOverrideProcessor primitiveArrayOverrideProcessor = new PrimitiveArrayOverrideProcessor(configuration, cloakBuilder);
+        CharacterPrimitiveArrayOverrideProcessor characterPrimitiveArrayOverrideProcessor = new CharacterPrimitiveArrayOverrideProcessor(configuration, cloakBuilder);
 
         for (Rule rule : configuration.getRules()) {
             /* Verify if the Rule is constructed properly */
@@ -74,6 +78,15 @@ public class RuleProcessor {
             specs.add(new TypeSpecContainer(configuration.getCloakPackage(), enumOverrideProcessor.createOverride(rule)));
             /* Creates a ToString implementation for each Rule which can be used for any class which needs to be serialized by calling toString() */
             specs.add(new TypeSpecContainer(configuration.getCloakPackage(), toStringProcessor.createOverride(rule)));
+            /* Creates a Map implementation for each Rule which can be used for Maps */
+            specs.add(new TypeSpecContainer(configuration.getCloakPackage(), mapOverrideProcessor.createOverride(rule)));
+            /* Creates a Collection implementation for each Rule which can be used for Collections */
+            specs.add(new TypeSpecContainer(configuration.getCloakPackage(), collectionOverrideProcessor.createOverride(rule)));
+            /* Creates a object array implementation for each Rule */
+            specs.add(new TypeSpecContainer(configuration.getCloakPackage(), objectArrayOverrideProcessor.createOverride(rule)));
+            specs.addAll(primitiveArrayOverrideProcessor.createOverrides(rule).stream()
+                    .map(t -> new TypeSpecContainer(configuration.getCloakPackage(), t)).collect(Collectors.toList()));
+            specs.add(new TypeSpecContainer(configuration.getCloakPackage(), characterPrimitiveArrayOverrideProcessor.createOverride(rule)));
         }
 
         return specs;

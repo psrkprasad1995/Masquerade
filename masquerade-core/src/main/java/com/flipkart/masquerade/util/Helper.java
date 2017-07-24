@@ -123,6 +123,10 @@ public class Helper {
         return ClassName.get(configuration.getCloakPackage(), SET_CLASS);
     }
 
+    public static String getRepositoryGetter() {
+        return "get" + SET_CLASS;
+    }
+
     public static String getInterfaceName(Rule rule) {
         return rule.getName() + INTERFACE_SUFFIX;
     }
@@ -143,6 +147,22 @@ public class Helper {
         return generateImplementationName(rule, "ToString");
     }
 
+    public static String getMapImplementationName(Rule rule) {
+        return generateImplementationName(rule, "Map");
+    }
+
+    public static String getCollectionImplementationName(Rule rule) {
+        return generateImplementationName(rule, "Collection");
+    }
+
+    public static String getObjectArrayImplementationName(Rule rule) {
+        return generateImplementationName(rule, "ObjectArray");
+    }
+
+    public static String getPrimitiveArrayImplementationName(Rule rule, Class<?> clazz) {
+        return generateImplementationName(rule, capitalize(clazz.getSimpleName()) + "ArrayPrimitive");
+    }
+
     public static ClassName getNoOpImplementationClass(Configuration configuration, Rule rule) {
         return ClassName.get(configuration.getCloakPackage(), getNoOpImplementationName(rule));
     }
@@ -153,6 +173,22 @@ public class Helper {
 
     public static ClassName getToStringImplementationClass(Configuration configuration, Rule rule) {
         return ClassName.get(configuration.getCloakPackage(), getToStringImplementationName(rule));
+    }
+
+    public static ClassName getMapImplementationClass(Configuration configuration, Rule rule) {
+        return ClassName.get(configuration.getCloakPackage(), getMapImplementationName(rule));
+    }
+
+    public static ClassName getCollectionImplementationClass(Configuration configuration, Rule rule) {
+        return ClassName.get(configuration.getCloakPackage(), getCollectionImplementationName(rule));
+    }
+
+    public static ClassName getObjectArrayImplementationClass(Configuration configuration, Rule rule) {
+        return ClassName.get(configuration.getCloakPackage(), getObjectArrayImplementationName(rule));
+    }
+
+    public static ClassName getPrimitiveArrayImplementationClass(Configuration configuration, Rule rule, Class<?> clazz) {
+        return ClassName.get(configuration.getCloakPackage(), getPrimitiveArrayImplementationName(rule, clazz));
     }
 
     private static String generateImplementationName(Rule rule, String prefix) {
@@ -175,8 +211,28 @@ public class Helper {
         return "enum" + rule.getName();
     }
 
+    public static String getVariableName(ClassName className) {
+        return className.reflectionName().replaceAll("\\.", "_");
+    }
+
     public static String getToStringVariableName(Rule rule) {
         return "toString" + rule.getName();
+    }
+
+    public static String getMapVariableName(Rule rule) {
+        return "map" + rule.getName();
+    }
+
+    public static String getCollectionVariableName(Rule rule) {
+        return "collection" + rule.getName();
+    }
+
+    public static String getObjectArrayVariableName(Rule rule) {
+        return "objectArray" + rule.getName();
+    }
+
+    public static String getPrimitiveArrayVariableName(Rule rule, Class<?> clazz) {
+        return clazz.getSimpleName().toLowerCase() + "ArrayPrimitive" + rule.getName();
     }
 
     public static Set<ClassPath.ClassInfo> getPackageClasses(ClassLoader classLoader, List<String> packagesToScan) throws IOException {
