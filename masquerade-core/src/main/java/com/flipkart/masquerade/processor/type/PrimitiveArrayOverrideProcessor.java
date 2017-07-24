@@ -52,18 +52,20 @@ public class PrimitiveArrayOverrideProcessor extends BaseOverrideProcessor {
             String implName = getPrimitiveArrayImplementationName(rule, primitiveType);
             MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, ArrayTypeName.of(primitiveType));
 
-            /* Iterate over the array */
-            methodBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "[");
-            methodBuilder.beginControlFlow("for ($T o : $L)", primitiveType, OBJECT_PARAMETER);
-            /* And recursively call this entry method for each object */
-            methodBuilder.addStatement("$L.append($L.$L(o, $L))", SERIALIZED_OBJECT, CLOAK_PARAMETER, ENTRY_METHOD, EVAL_PARAMETER);
-            methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
-            methodBuilder.endControlFlow();
-            methodBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
-            methodBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-            methodBuilder.endControlFlow();
-            methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
-            methodBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
+            if (configuration.isNativeSerializationEnabled()) {
+                /* Iterate over the array */
+                methodBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "[");
+                methodBuilder.beginControlFlow("for ($T o : $L)", primitiveType, OBJECT_PARAMETER);
+                /* And recursively call this entry method for each object */
+                methodBuilder.addStatement("$L.append($L.$L(o, $L))", SERIALIZED_OBJECT, CLOAK_PARAMETER, ENTRY_METHOD, EVAL_PARAMETER);
+                methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
+                methodBuilder.endControlFlow();
+                methodBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
+                methodBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
+                methodBuilder.endControlFlow();
+                methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
+                methodBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
+            }
 
             typeSpecs.add(generateImplementationType(rule, ArrayTypeName.of(primitiveType), implName, methodBuilder.build()));
         }

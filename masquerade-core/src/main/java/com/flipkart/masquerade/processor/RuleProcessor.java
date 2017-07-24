@@ -89,7 +89,6 @@ public class RuleProcessor {
             specs.addAll(primitiveArrayOverrideProcessor.createOverrides(rule).stream()
                     .map(t -> new TypeSpecContainer(configuration.getCloakPackage(), t)).collect(Collectors.toList()));
             specs.add(new TypeSpecContainer(configuration.getCloakPackage(), characterPrimitiveArrayOverrideProcessor.createOverride(rule)));
-            specs.add(new TypeSpecContainer(configuration.getCloakPackage(), characterPrimitiveArrayOverrideProcessor.createOverride(rule)));
             specs.add(new TypeSpecContainer(configuration.getCloakPackage(), stringOverrideProcessor.createOverride(rule)));
             specs.addAll(primitiveOverrideProcessor.createOverrides(rule).stream()
                     .map(t -> new TypeSpecContainer(configuration.getCloakPackage(), t)).collect(Collectors.toList()));

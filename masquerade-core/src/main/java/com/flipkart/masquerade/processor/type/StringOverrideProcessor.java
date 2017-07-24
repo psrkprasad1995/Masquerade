@@ -22,11 +22,9 @@ import com.flipkart.masquerade.rule.Rule;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
-import java.util.Map;
-
-import static com.flipkart.masquerade.util.Helper.getMapImplementationName;
 import static com.flipkart.masquerade.util.Helper.getStringImplementationName;
-import static com.flipkart.masquerade.util.Strings.*;
+import static com.flipkart.masquerade.util.Strings.OBJECT_PARAMETER;
+import static com.flipkart.masquerade.util.Strings.QUOTES;
 
 /**
  * Created by shrey.garg on 24/07/17.
@@ -50,8 +48,6 @@ public class StringOverrideProcessor extends BaseOverrideProcessor {
 
         if (configuration.isNativeSerializationEnabled()) {
             methodBuilder.addStatement("return $S + $L + $S", QUOTES, OBJECT_PARAMETER, QUOTES);
-        } else {
-            // Do nothing if serialization is not enabled
         }
 
         return generateImplementationType(rule, String.class, implName, methodBuilder.build());

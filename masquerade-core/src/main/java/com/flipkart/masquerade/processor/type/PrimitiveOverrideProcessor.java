@@ -52,13 +52,15 @@ public class PrimitiveOverrideProcessor extends BaseOverrideProcessor {
             String implName = getPrimitiveImplementationName(rule, primitiveType);
             MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, primitiveType);
 
-            if (primitiveType.equals(Character.class)) {
-                methodBuilder.beginControlFlow("if ($L == Character.valueOf('\\u0000'))", OBJECT_PARAMETER);
-                methodBuilder.addStatement("return $S", QUOTES + "\\u0000" + QUOTES);
-                methodBuilder.endControlFlow();
-                methodBuilder.addStatement("return $S + String.valueOf((char) $L) + $S", QUOTES, OBJECT_PARAMETER, QUOTES);
-            } else {
-                methodBuilder.addStatement("return String.valueOf($L)", OBJECT_PARAMETER);
+            if (configuration.isNativeSerializationEnabled()) {
+                if (primitiveType.equals(Character.class)) {
+                    methodBuilder.beginControlFlow("if ($L == Character.valueOf('\\u0000'))", OBJECT_PARAMETER);
+                    methodBuilder.addStatement("return $S", QUOTES + "\\u0000" + QUOTES);
+                    methodBuilder.endControlFlow();
+                    methodBuilder.addStatement("return $S + String.valueOf((char) $L) + $S", QUOTES, OBJECT_PARAMETER, QUOTES);
+                } else {
+                    methodBuilder.addStatement("return String.valueOf($L)", OBJECT_PARAMETER);
+                }
             }
 
             typeSpecs.add(generateImplementationType(rule, primitiveType, implName, methodBuilder.build()));

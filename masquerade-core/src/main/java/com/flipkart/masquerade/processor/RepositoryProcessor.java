@@ -81,8 +81,12 @@ public class RepositoryProcessor {
             handleMapEntry(repositoryBuilder, rule, initializer);
             handleCollectionEntry(repositoryBuilder, rule, initializer);
             handleObjectArrayEntry(repositoryBuilder, rule, initializer);
-            handlePrimitiveArrayEntries(repositoryBuilder, rule, initializer);
-            handleCharacterPrimitiveArrayEntries(repositoryBuilder, rule, initializer);
+            if (configuration.isNativeSerializationEnabled()) {
+                handlePrimitiveArrayEntries(repositoryBuilder, rule, initializer);
+                handleCharacterPrimitiveArrayEntries(repositoryBuilder, rule, initializer);
+            } else {
+                handleNoOpEntry(repositoryBuilder, rule, initializer);
+            }
         }
 
         repositoryBuilder.addInitializerBlock(initializer.build());
@@ -92,6 +96,11 @@ public class RepositoryProcessor {
     private void handleEnumEntry(TypeSpec.Builder repositoryBuilder, Rule rule, CodeBlock.Builder initializer) {
         handleEntry(repositoryBuilder, initializer,
                 getEnumImplementationClass(configuration, rule), getEnumVariableName(rule));
+    }
+
+    private void handleNoOpEntry(TypeSpec.Builder repositoryBuilder, Rule rule, CodeBlock.Builder initializer) {
+        handleEntry(repositoryBuilder, initializer,
+                getNoOpImplementationClass(configuration, rule), getNoOpVariableName(rule));
     }
 
     private void handleToStringEntries(TypeSpec.Builder repositoryBuilder, Rule rule, CodeBlock.Builder initializer) {

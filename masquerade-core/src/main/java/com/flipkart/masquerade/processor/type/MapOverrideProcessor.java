@@ -60,7 +60,7 @@ public class MapOverrideProcessor extends BaseOverrideProcessor {
             methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "}");
             methodBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
         } else {
-            methodBuilder.addStatement("$L.$L($L.values(), $L, $L)", CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER);
+            methodBuilder.addStatement("$L.$L($L.values(), $L)", CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
         }
 
         return generateImplementationType(rule, Map.class, implName, methodBuilder.build());

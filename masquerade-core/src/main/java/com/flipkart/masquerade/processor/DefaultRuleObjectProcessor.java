@@ -49,7 +49,7 @@ public class DefaultRuleObjectProcessor extends RuleObjectProcessor {
 
     @Override
     protected void handleRegisteredClasses(MethodSpec.Builder objectMaskBuilder) {
-        objectMaskBuilder.addStatement("$L.$L($L, $L, this)", MASKER_VARIABLE, INTERFACE_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
+        objectMaskBuilder.addStatement("$L.$L($L, $L, this, $L)", MASKER_VARIABLE, INTERFACE_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER);
     }
 
     @Override

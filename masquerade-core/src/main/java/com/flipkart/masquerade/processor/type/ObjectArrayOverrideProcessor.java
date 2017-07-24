@@ -62,7 +62,7 @@ public class ObjectArrayOverrideProcessor extends BaseOverrideProcessor {
         } else {
             methodBuilder.beginControlFlow("for (Object o : $L)", OBJECT_PARAMETER);
             /* And recursively call this entry method for each object */
-            methodBuilder.addStatement("SL.$L(o, $L)", CLOAK_PARAMETER, ENTRY_METHOD, EVAL_PARAMETER);
+            methodBuilder.addStatement("$L.$L(o, $L)", CLOAK_PARAMETER, ENTRY_METHOD, EVAL_PARAMETER);
             methodBuilder.endControlFlow();
         }
 

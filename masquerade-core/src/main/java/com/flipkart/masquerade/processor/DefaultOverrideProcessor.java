@@ -88,10 +88,10 @@ public class DefaultOverrideProcessor extends OverrideProcessor {
     @Override
     protected boolean skipRecursiveCall(Field field) {
         /* Does not add the statement if the field is primitive, primitive wrapper, String or an Enum */
-        return !field.getType().isPrimitive() &&
-                !getWrapperTypes().contains(field.getType()) &&
-                !String.class.isAssignableFrom(field.getType()) &&
-                !field.getType().isEnum();
+        return field.getType().isPrimitive() ||
+                getWrapperTypes().contains(field.getType()) ||
+                String.class.isAssignableFrom(field.getType()) ||
+                field.getType().isEnum();
     }
 
     @Override
