@@ -37,6 +37,7 @@ import static com.flipkart.masquerade.util.Strings.*;
 public class Helper {
     private static final Set<Class<?>> wrapperTypes = new HashSet<>();
     private static final Set<Class<?>> primitiveTypes = new HashSet<>();
+    private static final Map<Class<?>, ClassMeta<?>> classInformation = new HashMap<>();
 
     static {
         wrapperTypes.add(Boolean.class);
@@ -309,5 +310,37 @@ public class Helper {
 
     public static boolean isBoolean(Class<?> clazz) {
         return clazz.equals(Boolean.TYPE) || clazz.equals(Boolean.class);
+    }
+
+    public static void mapClasses(Set<ClassPath.ClassInfo> scannedClasses, ClassLoader classLoader) throws ClassNotFoundException {
+        for (ClassPath.ClassInfo info : scannedClasses) {
+            Class<?> clazz = Class.forName(info.getName(), true, classLoader);
+            classInformation.put(clazz, new ClassMeta<>(clazz));
+        }
+
+        for (Class<?> clazz : classInformation.keySet()) {
+            Class<?> superclass = clazz.getSuperclass();
+            if (superclass == null || superclass.equals(Object.class)) {
+                continue;
+            }
+
+            final ClassMeta<?> superClassMeta = classInformation.get(superclass);
+            if (superClassMeta != null) {
+                superClassMeta.addSubClass(clazz);
+            }
+
+        }
+    }
+
+    public static Map<Class<?>, ClassMeta<?>> getClassInformation() {
+        return classInformation;
+    }
+
+    public static Set<Class<?>> getClasses() {
+        return classInformation.keySet();
+    }
+
+    public static ClassMeta<?> getClassInformation(Class<?> clazz) {
+        return classInformation.get(clazz);
     }
 }

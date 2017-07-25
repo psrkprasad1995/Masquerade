@@ -74,11 +74,10 @@ public class Masquerade {
         specs.addAll(ruleProcessor.generateRuleTypeSpecs());
 
         List<RepositoryEntry> repositoryEntries = new ArrayList<>();
-        for (ClassPath.ClassInfo info : scannedClasses) {
-            Class<?> clazz = Class.forName(info.getName(), true, classLoader);
-
+        mapClasses(scannedClasses, classLoader);
+        for (Class<?> clazz : getClasses()) {
             /* Skip processing if the class is an Enum, Interface, Abstract or not a public class */
-            if (clazz.isEnum() || clazz.isInterface() || isAbstract(clazz) || !isPublic(clazz)) {
+            if (clazz.isEnum() || clazz.isInterface() || getClassInformation(clazz).isAbstract() || !getClassInformation(clazz).isPublic()) {
                 continue;
             }
 
