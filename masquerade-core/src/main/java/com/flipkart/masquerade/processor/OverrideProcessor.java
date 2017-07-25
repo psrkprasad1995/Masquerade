@@ -16,13 +16,17 @@
 
 package com.flipkart.masquerade.processor;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.annotation.IgnoreCloak;
 import com.flipkart.masquerade.rule.*;
+import com.flipkart.masquerade.serialization.FieldMeta;
 import com.flipkart.masquerade.util.FieldDescriptor;
-import com.squareup.javapoet.*;
+import com.squareup.javapoet.ClassName;
+import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.MethodSpec;
+import com.squareup.javapoet.TypeSpec;
 
-import javax.lang.model.element.Modifier;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -30,16 +34,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.flipkart.masquerade.util.Helper.*;
-import static com.flipkart.masquerade.util.Strings.*;
+import static com.flipkart.masquerade.util.Strings.OBJECT_PARAMETER;
 
 /**
  * Processor that creates an implementation class for a Mask interface
  * <p />
  * Created by shrey.garg on 12/05/17.
  */
-public class OverrideProcessor extends BaseOverrideProcessor {
+public abstract class OverrideProcessor extends BaseOverrideProcessor {
     /**
      * @param configuration Configuration for the current processing cycle
      * @param cloakBuilder  Entry class under construction for the cycle
@@ -56,23 +61,38 @@ public class OverrideProcessor extends BaseOverrideProcessor {
      */
     public Optional<TypeSpec> createOverride(Rule rule, Class<?> clazz, CodeBlock.Builder initializer) {
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, clazz);
+        declareInitializeVariables(methodBuilder);
 
-        /* Only consider fields for processing that are not static */
-        for (Field field : getNonStaticFields(clazz)) {
-            if (field.getType().isPrimitive() || field.isAnnotationPresent(IgnoreCloak.class)) {
+        /* Only consider fields for processing that are not static and remove fields that are to be ignored */
+        List<Field> originalFields = getNonStaticFields(clazz).stream().filter(field -> !field.isAnnotationPresent(IgnoreCloak.class) && !field.isAnnotationPresent(JsonIgnore.class)).collect(Collectors.toList());
+        List<FieldMeta> nonStaticFields = orderedFields(originalFields, clazz);
+        addSyntheticFields(clazz, nonStaticFields);
+        for (FieldMeta field : nonStaticFields) {
+            if (skipProcessing(field)) {
                 continue;
             }
 
-            Class<? extends Annotation> annotationClass = rule.getAnnotationClass();
-            Annotation[] annotations = field.getAnnotationsByType(annotationClass);
-            if (annotations != null && annotations.length != 0) {
-                for (Annotation annotation : annotations) {
-                    constructOperation(rule, annotationClass, annotation, methodBuilder, field.getName(), clazz);
+            if (field.isSynthetic()) {
+                handleSyntheticFields(field, methodBuilder);
+                continue;
+            }
+
+            if (!skipAnnotationProcessing(field)) {
+                Class<? extends Annotation> annotationClass = rule.getAnnotationClass();
+                Annotation[] annotations = field.getField().getAnnotationsByType(annotationClass);
+                if (annotations != null && annotations.length != 0) {
+                    for (Annotation annotation : annotations) {
+                        constructOperation(rule, annotationClass, annotation, methodBuilder, field.getField(), clazz);
+                    }
                 }
             }
 
-            addRecursiveStatement(clazz, field, methodBuilder);
+            handleFieldKeys(clazz, field, methodBuilder);
+            addRecursiveStatement(rule, clazz, field.getField(), methodBuilder, initializer);
+            handleFieldValues(field, methodBuilder);
         }
+
+        returns(methodBuilder);
 
         MethodSpec methodSpec = methodBuilder.build();
         if (methodSpec.code.isEmpty()) {
@@ -90,19 +110,20 @@ public class OverrideProcessor extends BaseOverrideProcessor {
      * @param field Current Field
      * @param methodBuilder Current method builder
      */
-    private void addRecursiveStatement(Class<?> clazz, Field field, MethodSpec.Builder methodBuilder) {
-        /* Does not add the statement if the field is primitive, primitive wrapper, String or an Enum */
-        if (!field.getType().isPrimitive() &&
-                !getWrapperTypes().contains(field.getType()) &&
-                !String.class.isAssignableFrom(field.getType()) &&
-                !field.getType().isEnum()) {
-            String getter = getGetterName(field.getName());
+    private void addRecursiveStatement(Rule rule, Class<?> clazz, Field field, MethodSpec.Builder methodBuilder, CodeBlock.Builder initializer) {
+        if (!skipRecursiveCall(field)) {
+            String getter = getGetterName(field.getName(), isBoolean(field.getType()), field.getType().isPrimitive());
             try {
                 clazz.getMethod(getter);
             } catch (NoSuchMethodException e) {
                 throw new UnsupportedOperationException("A cloak-able class should have a getter defined for all fields. Class: " + clazz.getName() + " Field: " + field.getName());
             }
-            methodBuilder.addStatement("$L.$L($L.$L(), $L)", CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, getter, EVAL_PARAMETER);
+
+            if (field.getType().isEnum()) {
+                addEnumInitializerCode(rule, field.getType(), initializer);
+            }
+
+            recursiveStatement(methodBuilder, getter);
         }
     }
 
@@ -110,22 +131,26 @@ public class OverrideProcessor extends BaseOverrideProcessor {
         initializer.addStatement("$L.put($S, $L)", rule.getName(), clazz.getName(), getNoOpVariableName(rule));
     }
 
+    private void addEnumInitializerCode(Rule rule, Class<?> clazz, CodeBlock.Builder initializer) {
+        initializer.addStatement("$L.put($S, $L)", rule.getName(), clazz.getName(), getEnumVariableName(rule));
+    }
+
     private void addInitializerCode(Rule rule, Class<?> clazz, CodeBlock.Builder initializer, String implName) {
         ClassName cloakName = ClassName.get(getImplementationPackage(configuration, clazz), implName);
         initializer.addStatement("$L.put($S, new $T())", rule.getName(), clazz.getName(), cloakName);
     }
 
-    private void constructOperation(Rule rule, Class<? extends Annotation> annotationClass, Annotation annotation, MethodSpec.Builder builder, String fieldName, Class<?> clazz) {
+    private void constructOperation(Rule rule, Class<? extends Annotation> annotationClass, Annotation annotation, MethodSpec.Builder builder, Field field, Class<?> clazz) {
         List<Object> operands = new ArrayList<>();
 
         CompositeRule baseRule = rule.getValueRule();
         String operation = constructBasicOperation(baseRule, baseRule.getConjunction(), annotationClass, annotation, operands);
 
-        String setter = getSetterName(fieldName);
+        String setter = getSetterName(field.getName(), isBoolean(field.getType()));
         Arrays.stream(clazz.getMethods())
                 .filter(method -> method.getName().equals(setter))
                 .findFirst()
-                .orElseThrow(() -> new UnsupportedOperationException("A cloak-able class should have a setter defined for all fields. Class: " + clazz.getName() + " Field: " + fieldName));
+                .orElseThrow(() -> new UnsupportedOperationException("A cloak-able class should have a setter defined for all fields. Class: " + clazz.getName() + " Field: " + field.getName()));
 
         builder.beginControlFlow("if (" + operation + ")", operands.toArray());
         builder.addStatement("$L.$L(null)", OBJECT_PARAMETER, setter);
@@ -194,4 +219,35 @@ public class OverrideProcessor extends BaseOverrideProcessor {
         ClassName enumName = ClassName.get(value.getClass().getPackage().getName(), value.getClass().getSimpleName());
         return CodeBlock.of("$T.$L", enumName, value);
     }
+
+    private List<FieldMeta> orderedFields(List<Field> fields, Class<?> clazz) {
+        List<FieldMeta> fieldMetas = transform(fields, clazz);
+        return enrichFieldMetas(fieldMetas, clazz);
+    }
+
+    private List<FieldMeta> transform(List<Field> fields, Class<?> clazz) {
+        return fields.stream().map(field -> new FieldMeta(field, clazz)).collect(Collectors.toList());
+    }
+
+    protected abstract void declareInitializeVariables(MethodSpec.Builder methodBuilder);
+
+    protected abstract List<FieldMeta> enrichFieldMetas(List<FieldMeta> fieldMetas, Class<?> clazz);
+
+    protected abstract void addSyntheticFields(Class<?> clazz, List<FieldMeta> fields);
+
+    protected abstract boolean skipProcessing(FieldMeta field);
+
+    protected abstract void handleSyntheticFields(FieldMeta field, MethodSpec.Builder methodBuilder);
+
+    protected abstract boolean skipAnnotationProcessing(FieldMeta field);
+
+    protected abstract void handleFieldKeys(Class<?> clazz, FieldMeta field, MethodSpec.Builder methodBuilder);
+
+    protected abstract void handleFieldValues(FieldMeta field, MethodSpec.Builder methodBuilder);
+
+    protected abstract void returns(MethodSpec.Builder methodBuilder);
+
+    protected abstract boolean skipRecursiveCall(Field field);
+
+    protected abstract void recursiveStatement(MethodSpec.Builder methodBuilder, String getterName);
 }

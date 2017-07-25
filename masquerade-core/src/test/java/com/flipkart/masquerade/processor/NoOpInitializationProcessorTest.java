@@ -1,10 +1,10 @@
 package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
+import com.flipkart.masquerade.processor.type.NoOpInitializationProcessor;
 import com.flipkart.masquerade.rule.Rule;
 import com.flipkart.masquerade.test.ConfigurationExtension;
 import com.flipkart.masquerade.test.annotation.ConfigProvider;
-import com.flipkart.masquerade.util.Helper;
 import com.squareup.javapoet.CodeBlock;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

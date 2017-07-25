@@ -17,10 +17,10 @@
 package com.flipkart.masquerade;
 
 import com.flipkart.masquerade.processor.*;
+import com.flipkart.masquerade.processor.type.NoOpInitializationProcessor;
+import com.flipkart.masquerade.processor.type.ToStringInitializationProcessor;
 import com.flipkart.masquerade.rule.Rule;
-import com.flipkart.masquerade.util.Helper;
 import com.flipkart.masquerade.util.TypeSpecContainer;
-import com.flipkart.masquerade.util.Verifier;
 import com.google.common.reflect.ClassPath;
 import com.squareup.javapoet.AnnotationSpec;
 import com.squareup.javapoet.CodeBlock;
@@ -68,10 +68,15 @@ public class Masquerade {
         CodeBlock.Builder staticCode = CodeBlock.builder();
 
         RuleProcessor ruleProcessor = new RuleProcessor(configuration, builder);
-        OverrideProcessor overrideProcessor = new OverrideProcessor(configuration, builder);
+        OverrideProcessor overrideProcessor = configuration.isNativeSerializationEnabled() ? new SerializationOverrideProcessor(configuration, builder) : new DefaultOverrideProcessor(configuration, builder);
         NoOpInitializationProcessor noOpInitializationProcessor = new NoOpInitializationProcessor(configuration, builder);
+        ToStringInitializationProcessor toStringInitializationProcessor = new ToStringInitializationProcessor(configuration, builder);
+
+        DebugProcessor debugProcessor = new DebugProcessor(configuration, builder);
+        debugProcessor.addGetter();
 
         configuration.getRules().forEach(rule -> noOpInitializationProcessor.generateNoOpEntries(rule, staticCode));
+        configuration.getRules().forEach(rule -> toStringInitializationProcessor.generateToStringEntries(rule, staticCode));
         specs.addAll(ruleProcessor.generateRuleTypeSpecs());
 
         for (ClassPath.ClassInfo info : scannedClasses) {

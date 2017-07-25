@@ -23,6 +23,7 @@ import com.google.common.reflect.ClassPath;
 import com.squareup.javapoet.ClassName;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -34,16 +35,42 @@ import static com.flipkart.masquerade.util.Strings.*;
  * Created by shrey.garg on 25/04/17.
  */
 public class Helper {
-    public static String getSetterName(String name) {
+    public static String getSetterName(String name, boolean isBoolean) {
         String capitalizedName = capitalize(name);
         String prefix = "set";
+
+        if (isBoolean) {
+            capitalizedName = handleIsPrefix(capitalizedName);
+        }
+
         return prefix + capitalizedName;
     }
 
-    public static String getGetterName(String name) {
+    public static String getGetterName(String name, boolean isBoolean, boolean isPrimitive) {
         String capitalizedName = capitalize(name);
         String prefix = "get";
+
+        if (isBoolean) {
+            capitalizedName = handleIsPrefix(capitalizedName);
+
+            if (isPrimitive) {
+                prefix = "is";
+            }
+        }
+
         return prefix + capitalizedName;
+    }
+
+    public static String handleIsPrefix(String name) {
+        String capitalizedName = capitalize(name);
+
+        if (capitalizedName.startsWith("Is")) {
+            if (capitalizedName.length() > 2 && Character.isUpperCase(capitalizedName.charAt(2))) {
+                capitalizedName = capitalizedName.substring(2);
+            }
+        }
+
+        return capitalizedName;
     }
 
     public static Set<Class<?>> getWrapperTypes() {
@@ -60,8 +87,32 @@ public class Helper {
         return ret;
     }
 
+    public static Set<Class<?>> getPrimitivesTypes() {
+        Set<Class<?>> ret = new HashSet<>();
+        ret.add(Boolean.TYPE);
+        ret.add(Byte.TYPE);
+        ret.add(Short.TYPE);
+        ret.add(Integer.TYPE);
+        ret.add(Long.TYPE);
+        ret.add(Float.TYPE);
+        ret.add(Double.TYPE);
+        return ret;
+    }
+
+    public static Set<Class<?>> getEmptiableTypes() {
+        Set<Class<?>> ret = new HashSet<>();
+        ret.add(Map.class);
+        ret.add(Collection.class);
+        ret.add(String.class);
+        return ret;
+    }
+
     private static String capitalize(String name) {
         return name.substring(0, 1).toUpperCase() + name.substring(1);
+    }
+
+    public static String deCapitalize(String name) {
+        return name.substring(0, 1).toLowerCase() + name.substring(1);
     }
 
     public static ClassName getRuleInterface(Configuration configuration, Rule rule) {
@@ -80,8 +131,24 @@ public class Helper {
         return generateImplementationName(rule, "NoOp");
     }
 
+    public static String getEnumImplementationName(Rule rule) {
+        return generateImplementationName(rule, "Enum");
+    }
+
+    public static String getToStringImplementationName(Rule rule) {
+        return generateImplementationName(rule, "ToString");
+    }
+
     public static ClassName getNoOpImplementationClass(Configuration configuration, Rule rule) {
         return ClassName.get(configuration.getCloakPackage(), getNoOpImplementationName(rule));
+    }
+
+    public static ClassName getEnumImplementationClass(Configuration configuration, Rule rule) {
+        return ClassName.get(configuration.getCloakPackage(), getEnumImplementationName(rule));
+    }
+
+    public static ClassName getToStringImplementationClass(Configuration configuration, Rule rule) {
+        return ClassName.get(configuration.getCloakPackage(), getToStringImplementationName(rule));
     }
 
     private static String generateImplementationName(Rule rule, String prefix) {
@@ -98,6 +165,14 @@ public class Helper {
 
     public static String getNoOpVariableName(Rule rule) {
         return "noOp" + rule.getName();
+    }
+
+    public static String getEnumVariableName(Rule rule) {
+        return "enum" + rule.getName();
+    }
+
+    public static String getToStringVariableName(Rule rule) {
+        return "toString" + rule.getName();
     }
 
     public static Set<ClassPath.ClassInfo> getPackageClasses(ClassLoader classLoader, List<String> packagesToScan) throws IOException {
@@ -121,6 +196,16 @@ public class Helper {
         return fields;
     }
 
+    public static <T extends Annotation> T getAnnotation(Class<?> type, Class<T> annotationClass) {
+        for (Class<?> c = type; c != null; c = c.getSuperclass()) {
+            T annotation = c.getAnnotation(annotationClass);
+            if (annotation != null) {
+                return annotation;
+            }
+        }
+        return null;
+    }
+
     public static String getEvaluationFunction(BasicRule basicRule) {
         return EVAL_PARAMETER + "." + basicRule.getEvaluatorFunction();
     }
@@ -131,5 +216,9 @@ public class Helper {
 
     public static boolean isPublic(Class clazz) {
         return Modifier.isPublic(clazz.getModifiers());
+    }
+
+    public static boolean isBoolean(Class<?> clazz) {
+        return clazz.equals(Boolean.TYPE) || clazz.equals(Boolean.class);
     }
 }

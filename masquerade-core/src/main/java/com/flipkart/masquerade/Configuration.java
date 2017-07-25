@@ -17,7 +17,11 @@
 package com.flipkart.masquerade;
 
 import com.flipkart.masquerade.rule.Rule;
+import com.flipkart.masquerade.serialization.SerializationProperty;
+import com.flipkart.masquerade.util.Fallback;
 
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -25,7 +29,18 @@ import java.util.Set;
  * Created by shrey.garg on 25/04/17.
  */
 public interface Configuration {
+    Set<String> toStringSerializableClasses = new HashSet<>(Arrays.asList("java.net.URI"));
+
     List<String> getPackagesToScan();
     Set<Rule> getRules();
     String getCloakPackage();
+    boolean isNativeSerializationEnabled();
+    Set<SerializationProperty> serializationProperties();
+    boolean isDebugMode();
+    default Set<String> toStringSerializableClasses() {
+        return toStringSerializableClasses;
+    }
+    default Fallback fallback() {
+        return null;
+    }
 }

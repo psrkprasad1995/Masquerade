@@ -16,8 +16,14 @@
 
 package com.flipkart.masquerade.test;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.rule.*;
+import com.flipkart.masquerade.serialization.SerializationProperty;
+import com.flipkart.masquerade.util.Fallback;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -29,6 +35,7 @@ import java.util.Set;
  */
 public class TestConfig implements Configuration {
     private static Set<Rule> rules = new HashSet<>();
+    private static HashSet<SerializationProperty> serializationProperties = new HashSet<>();
 
     static {
         Rule rule = new Rule(
@@ -45,6 +52,8 @@ public class TestConfig implements Configuration {
                 )
         );
         rules.add(rule);
+
+        serializationProperties.add(SerializationProperty.SORT_PROPERTIES_ALPHABETICALLY);
     }
 
     @Override
@@ -60,5 +69,25 @@ public class TestConfig implements Configuration {
     @Override
     public String getCloakPackage() {
         return "org.test.veils";
+    }
+
+    @Override
+    public boolean isNativeSerializationEnabled() {
+        return true;
+    }
+
+    @Override
+    public Set<SerializationProperty> serializationProperties() {
+        return serializationProperties;
+    }
+
+    @Override
+    public boolean isDebugMode() {
+        return false;
+    }
+
+    @Override
+    public Fallback fallback() {
+        return new FallbackImpl();
     }
 }

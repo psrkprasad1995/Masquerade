@@ -17,8 +17,10 @@
 package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
+import com.flipkart.masquerade.processor.type.EnumOverrideProcessor;
+import com.flipkart.masquerade.processor.type.NoOpOverrideProcessor;
+import com.flipkart.masquerade.processor.type.ToStringProcessor;
 import com.flipkart.masquerade.rule.Rule;
-import com.flipkart.masquerade.util.Helper;
 import com.flipkart.masquerade.util.TypeSpecContainer;
 import com.flipkart.masquerade.util.Verifier;
 import com.squareup.javapoet.FieldSpec;
@@ -54,8 +56,10 @@ public class RuleProcessor {
         /* Initialize all the processors */
         ReferenceMapProcessor mapProcessor = new ReferenceMapProcessor(configuration, cloakBuilder);
         InterfaceProcessor interfaceProcessor = new InterfaceProcessor(configuration, cloakBuilder);
-        RuleObjectProcessor ruleObjectProcessor = new RuleObjectProcessor(configuration, cloakBuilder);
+        RuleObjectProcessor ruleObjectProcessor = configuration.isNativeSerializationEnabled() ? new SerializationRuleObjectProcessor(configuration, cloakBuilder) : new DefaultRuleObjectProcessor(configuration, cloakBuilder);
         NoOpOverrideProcessor noOpOverrideProcessor = new NoOpOverrideProcessor(configuration, cloakBuilder);
+        EnumOverrideProcessor enumOverrideProcessor = new EnumOverrideProcessor(configuration, cloakBuilder);
+        ToStringProcessor toStringProcessor = new ToStringProcessor(configuration, cloakBuilder);
 
         for (Rule rule : configuration.getRules()) {
             /* Verify if the Rule is constructed properly */
@@ -70,10 +74,20 @@ public class RuleProcessor {
             ruleObjectProcessor.addEntry(rule);
             /* Creates a NoOp implementation for each Rule which can be used for terminal classes */
             specs.add(new TypeSpecContainer(configuration.getCloakPackage(), noOpOverrideProcessor.createOverride(rule)));
+            /* Creates a Enum implementation for each Rule which can be used for enums */
+            specs.add(new TypeSpecContainer(configuration.getCloakPackage(), enumOverrideProcessor.createOverride(rule)));
+            /* Creates a ToString implementation for each Rule which can be used for any class which needs to be serialized by calling toString() */
+            specs.add(new TypeSpecContainer(configuration.getCloakPackage(), toStringProcessor.createOverride(rule)));
             /* Create a NoOP Mask field */
             FieldSpec fieldSpec = FieldSpec.builder(getRuleInterface(configuration, rule), getNoOpVariableName(rule), Modifier.PRIVATE)
                     .initializer("new $T()", getNoOpImplementationClass(configuration, rule)).build();
             cloakBuilder.addField(fieldSpec);
+            FieldSpec enumFieldSpec = FieldSpec.builder(getRuleInterface(configuration, rule), getEnumVariableName(rule), Modifier.PRIVATE)
+                    .initializer("new $T()", getEnumImplementationClass(configuration, rule)).build();
+            cloakBuilder.addField(enumFieldSpec);
+            FieldSpec toStringFieldSpec = FieldSpec.builder(getRuleInterface(configuration, rule), getToStringVariableName(rule), Modifier.PRIVATE)
+                    .initializer("new $T()", getToStringImplementationClass(configuration, rule)).build();
+            cloakBuilder.addField(toStringFieldSpec);
         }
 
         return specs;

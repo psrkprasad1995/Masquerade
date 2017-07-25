@@ -34,9 +34,11 @@ import static com.flipkart.masquerade.util.Strings.*;
  * <p />
  * Created by shrey.garg on 12/05/17.
  */
-public class RuleObjectProcessor {
+public abstract class RuleObjectProcessor {
     private final Configuration configuration;
     private final TypeSpec.Builder cloakBuilder;
+    private final DebugProcessor debugProcessor;
+    private final FallbackProcessor fallbackProcessor;
 
     /**
      * @param configuration Configuration for the current processing cycle
@@ -45,6 +47,8 @@ public class RuleObjectProcessor {
     public RuleObjectProcessor(Configuration configuration, TypeSpec.Builder cloakBuilder) {
         this.configuration = configuration;
         this.cloakBuilder = cloakBuilder;
+        this.debugProcessor = new DebugProcessor(configuration, cloakBuilder);
+        this.fallbackProcessor = new FallbackProcessor(configuration, cloakBuilder);
     }
 
     /**
@@ -62,7 +66,7 @@ public class RuleObjectProcessor {
 
         /* If a null Object is passed, return immediately */
         objectMaskBuilder.beginControlFlow("if ($L == null)", OBJECT_PARAMETER);
-        objectMaskBuilder.addStatement("return");
+        handleReturnsForNullObjects(objectMaskBuilder);
         objectMaskBuilder.endControlFlow();
 
         /* Fetch the Mask implementation object from Map and assign it to an interface reference for the Rule */
@@ -75,30 +79,45 @@ public class RuleObjectProcessor {
         /* Check if the retrieved Object is present */
         objectMaskBuilder.beginControlFlow("if ($L != null)", MASKER_VARIABLE);
         /* If it is, then call the mask method for the Object */
-        objectMaskBuilder.addStatement("$L.$L($L, $L, this)", MASKER_VARIABLE, INTERFACE_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
+        handleRegisteredClasses(objectMaskBuilder);
+
         objectMaskBuilder.nextControlFlow("else");
         /* Otherwise, check if the Object is an instance of Map */
         objectMaskBuilder.beginControlFlow("if ($L instanceof $T)", OBJECT_PARAMETER, Map.class);
         /* If it is, then recursively call this entry method with the List of map values */
-        objectMaskBuilder.addStatement("this.$L(((Map) $L).values(), $L)", ENTRY_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
+        handleMaps(objectMaskBuilder);
 
         /* If it's not a Map, then check if the Object is a collection */
         objectMaskBuilder.nextControlFlow("else if ($L instanceof $T)", OBJECT_PARAMETER, Collection.class);
         /* If it is, then iterate over the collection */
-        objectMaskBuilder.beginControlFlow("for (Object o : ((Collection) $L))", OBJECT_PARAMETER);
-        /* And recursively call this entry method for each object */
-        objectMaskBuilder.addStatement("this.$L(o, $L)", ENTRY_METHOD, EVAL_PARAMETER);
-        objectMaskBuilder.endControlFlow();
+        handleCollections(objectMaskBuilder);
         /* If it's not a Collection, then check if the Object is an array */
         objectMaskBuilder.nextControlFlow("else if ($L instanceof Object[])", OBJECT_PARAMETER);
         /* If it is, then iterate over the array */
-        objectMaskBuilder.beginControlFlow("for (Object o : ((Object[]) $L))", OBJECT_PARAMETER);
-        /* And recursively call this entry method for each object */
-        objectMaskBuilder.addStatement("this.$L(o, $L)", ENTRY_METHOD, EVAL_PARAMETER);
-        objectMaskBuilder.endControlFlow();
+        handleObjectArrays(objectMaskBuilder);
+        /* If it's not an Object[], then check if the Object is a primitive array, only if native serialization is enabled */
+        handlePrimitiveArrays(objectMaskBuilder);
+        debugProcessor.addDebugCollector(objectMaskBuilder);
+        fallbackProcessor.addFallbackCall(objectMaskBuilder);
         objectMaskBuilder.endControlFlow();
         objectMaskBuilder.endControlFlow();
 
+        handleReturns(objectMaskBuilder);
+
         cloakBuilder.addMethod(objectMaskBuilder.build());
     }
+
+    protected abstract void handleReturnsForNullObjects(MethodSpec.Builder objectMaskBuilder);
+
+    protected abstract void handleRegisteredClasses(MethodSpec.Builder objectMaskBuilder);
+
+    protected abstract void handleMaps(MethodSpec.Builder objectMaskBuilder);
+
+    protected abstract void handleCollections(MethodSpec.Builder objectMaskBuilder);
+
+    protected abstract void handleObjectArrays(MethodSpec.Builder objectMaskBuilder);
+
+    protected abstract void handlePrimitiveArrays(MethodSpec.Builder objectMaskBuilder);
+
+    protected abstract void handleReturns(MethodSpec.Builder objectMaskBuilder);
 }

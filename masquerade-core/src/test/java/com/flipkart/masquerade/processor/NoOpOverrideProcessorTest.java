@@ -1,6 +1,7 @@
 package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
+import com.flipkart.masquerade.processor.type.NoOpOverrideProcessor;
 import com.flipkart.masquerade.rule.Rule;
 import com.flipkart.masquerade.test.ConfigurationExtension;
 import com.flipkart.masquerade.test.annotation.ConfigProvider;

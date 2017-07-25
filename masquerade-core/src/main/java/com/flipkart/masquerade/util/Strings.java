@@ -31,4 +31,12 @@ public class Strings {
     public static final String OBJECT_PARAMETER = Object.class.getSimpleName().toLowerCase();
     public static final String EVAL_PARAMETER = "eval";
     public static final String CLOAK_PARAMETER = ENTRY_CLASS.toLowerCase();
+
+    public static final String SERIALIZED_OBJECT = "serialized";
+
+    public static final String QUOTES = "\"";
+
+    public static final String DEBUG_LIST = "missingClasses";
+    public static final String FALLBACK_VARIABLE = "fallback";
+    public static final String FALLBACK_METHOD = "convertToString";
 }

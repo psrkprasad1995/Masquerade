@@ -17,19 +17,19 @@
 package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
-import com.flipkart.masquerade.rule.Rule;
-import com.squareup.javapoet.CodeBlock;
+import com.flipkart.masquerade.util.Fallback;
+import com.squareup.javapoet.FieldSpec;
+import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
-import static com.flipkart.masquerade.util.Helper.getNoOpVariableName;
-import static com.flipkart.masquerade.util.Helper.getWrapperTypes;
+import javax.lang.model.element.Modifier;
+
+import static com.flipkart.masquerade.util.Strings.*;
 
 /**
- * Processor that add entries for all Primitive wrappers and String as NoOp Masks
- * <p />
- * Created by shrey.garg on 27/05/17.
+ * Created by shrey.garg on 18/07/17.
  */
-public class NoOpInitializationProcessor {
+public class FallbackProcessor {
     private final Configuration configuration;
     private final TypeSpec.Builder cloakBuilder;
 
@@ -37,18 +37,21 @@ public class NoOpInitializationProcessor {
      * @param configuration Configuration for the current processing cycle
      * @param cloakBuilder Entry class under construction for the cycle
      */
-    public NoOpInitializationProcessor(Configuration configuration, TypeSpec.Builder cloakBuilder) {
+    public FallbackProcessor(Configuration configuration, TypeSpec.Builder cloakBuilder) {
         this.configuration = configuration;
         this.cloakBuilder = cloakBuilder;
     }
 
-    /**
-     * @param rule The rule to generate the interface for
-     */
-    public void generateNoOpEntries(Rule rule, CodeBlock.Builder initializer) {
-        for (Class<?> clazz : getWrapperTypes()) {
-            initializer.addStatement("$L.put($S, $L)", rule.getName(), clazz.getName(), getNoOpVariableName(rule));
+    public void addFallbackCall(MethodSpec.Builder objectMaskBuilder) {
+        if (!configuration.isNativeSerializationEnabled() || configuration.fallback() == null) {
+            return;
         }
-        initializer.addStatement("$L.put($S, $L)", rule.getName(), String.class.getName(), getNoOpVariableName(rule));
+
+        cloakBuilder.addField(FieldSpec
+                .builder(Fallback.class, FALLBACK_VARIABLE, Modifier.PRIVATE, Modifier.FINAL)
+                .initializer("new $T()", configuration.fallback().getClass()).build());
+
+        objectMaskBuilder.nextControlFlow("else");
+        objectMaskBuilder.addStatement("return $L.$L($L)", FALLBACK_VARIABLE, FALLBACK_METHOD, OBJECT_PARAMETER);
     }
 }

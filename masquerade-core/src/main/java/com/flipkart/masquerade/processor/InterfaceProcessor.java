@@ -61,6 +61,10 @@ public class InterfaceProcessor {
         methodBuilder.addParameter(rule.getEvaluatorClass(), EVAL_PARAMETER);
         methodBuilder.addParameter(getEntryClass(configuration), CLOAK_PARAMETER);
 
+        if (configuration.isNativeSerializationEnabled()) {
+            methodBuilder.returns(String.class);
+        }
+
         ruleInterface.addMethod(methodBuilder.build());
 
         return ruleInterface.build();

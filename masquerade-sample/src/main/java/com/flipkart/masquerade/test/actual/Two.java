@@ -16,7 +16,10 @@
 
 package com.flipkart.masquerade.test.actual;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.flipkart.masquerade.annotation.IgnoreCloak;
+import com.flipkart.masquerade.test.Fruit;
 import com.flipkart.masquerade.test.Platform;
 import com.flipkart.masquerade.test.ValidationAnnotation;
 
@@ -28,9 +31,14 @@ public class Two {
     private String l1;
     private Integer l2;
     @IgnoreCloak
+    @JsonIgnore
     private One one;
     private Three three;
     private Four four;
+    @JsonInclude(JsonInclude.Include.NON_DEFAULT)
+    private boolean primitiveBoolean;
+    private Boolean wrapperBoolean;
+    private Fruit fruit = Fruit.APPLE;
 
     public String getL1() {
         return l1;
@@ -79,5 +87,29 @@ public class Two {
 
     public void setFour(Four four) {
         this.four = four;
+    }
+
+    public boolean isPrimitiveBoolean() {
+        return primitiveBoolean;
+    }
+
+    public void setPrimitiveBoolean(boolean primitiveBoolean) {
+        this.primitiveBoolean = primitiveBoolean;
+    }
+
+    public Boolean getWrapperBoolean() {
+        return wrapperBoolean;
+    }
+
+    public void setWrapperBoolean(Boolean wrapperBoolean) {
+        this.wrapperBoolean = wrapperBoolean;
+    }
+
+    public Fruit getFruit() {
+        return fruit;
+    }
+
+    public void setFruit(Fruit fruit) {
+        this.fruit = fruit;
     }
 }
