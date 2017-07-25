@@ -17,11 +17,14 @@
 package com.flipkart.masquerade.processor;
 
 import com.flipkart.masquerade.Configuration;
+import com.flipkart.masquerade.util.Fallback;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
-import static com.flipkart.masquerade.util.Strings.DEBUG_LIST;
-import static com.flipkart.masquerade.util.Strings.OBJECT_PARAMETER;
+import javax.lang.model.element.Modifier;
+
+import static com.flipkart.masquerade.util.Strings.*;
 
 /**
  * Created by shrey.garg on 18/07/17.
@@ -40,12 +43,15 @@ public class FallbackProcessor {
     }
 
     public void addFallbackCall(MethodSpec.Builder objectMaskBuilder) {
-        if (configuration.fallbackFunction() == null) {
+        if (!configuration.isNativeSerializationEnabled() || configuration.fallback() == null) {
             return;
         }
 
-        objectMaskBuilder.nextControlFlow("else");
-        objectMaskBuilder.addStatement("return $T.$L($L)", configuration.fallbackFunction().getClazz(), configuration.fallbackFunction().getStaticMethod(), OBJECT_PARAMETER);
+        cloakBuilder.addField(FieldSpec
+                .builder(Fallback.class, FALLBACK_VARIABLE, Modifier.PRIVATE, Modifier.FINAL)
+                .initializer("new $T()", configuration.fallback().getClass()).build());
 
+        objectMaskBuilder.nextControlFlow("else");
+        objectMaskBuilder.addStatement("return $L.$L($L)", FALLBACK_VARIABLE, FALLBACK_METHOD, OBJECT_PARAMETER);
     }
 }

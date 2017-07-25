@@ -37,4 +37,6 @@ public class Strings {
     public static final String QUOTES = "\"";
 
     public static final String DEBUG_LIST = "missingClasses";
+    public static final String FALLBACK_VARIABLE = "fallback";
+    public static final String FALLBACK_METHOD = "convertToString";
 }
