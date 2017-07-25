@@ -19,7 +19,7 @@ package com.flipkart.masquerade.test.cloaking;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.rule.*;
 import com.flipkart.masquerade.serialization.SerializationProperty;
-import com.flipkart.masquerade.util.FallbackSpecification;
+import com.flipkart.masquerade.util.Fallback;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -80,7 +80,7 @@ public class TestCloakConfig implements Configuration {
     }
 
     @Override
-    public FallbackSpecification fallbackFunction() {
+    public Fallback fallback() {
         return null;
     }
 }
