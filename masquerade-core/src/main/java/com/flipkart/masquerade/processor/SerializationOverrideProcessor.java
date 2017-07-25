@@ -169,6 +169,8 @@ public class SerializationOverrideProcessor extends OverrideProcessor {
             addRecursiveStatement(methodBuilder, getToStringVariableName(rule), getterName);
         } else if (clazz.isEnum()) {
             addRecursiveStatement(methodBuilder, getEnumVariableName(rule), getterName);
+        } else if (getClassInformation(clazz) != null && getClassInformation(clazz).getSubClasses().isEmpty()) {
+            addRecursiveStatement(methodBuilder, getVariableName(configuration, rule, clazz), getterName);
         } else {
             addDefaultRecursiveStatement(methodBuilder, getterName);
         }

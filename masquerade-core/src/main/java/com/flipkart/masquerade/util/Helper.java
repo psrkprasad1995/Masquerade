@@ -237,6 +237,12 @@ public class Helper {
         return className.reflectionName().replaceAll("\\.", "_");
     }
 
+    public static String getVariableName(Configuration configuration, Rule rule, Class<?> clazz) {
+        return getVariableName(
+                ClassName.get(getImplementationPackage(configuration, clazz),
+                        getImplementationName(rule, clazz)));
+    }
+
     public static String getToStringVariableName(Rule rule) {
         return "toString" + rule.getName();
     }
