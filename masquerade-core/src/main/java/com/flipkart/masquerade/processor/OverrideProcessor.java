@@ -33,7 +33,6 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -83,9 +82,11 @@ public abstract class OverrideProcessor extends BaseOverrideProcessor {
                 Class<? extends Annotation> annotationClass = rule.getAnnotationClass();
                 Annotation[] annotations = field.getField().getAnnotationsByType(annotationClass);
                 if (annotations != null && annotations.length != 0) {
+                    List<CodeBlock> operationBlocks = new ArrayList<>();
                     for (Annotation annotation : annotations) {
-                        constructOperation(rule, annotationClass, annotation, methodBuilder, field.getField(), clazz);
+                        operationBlocks.add(constructOperation(rule, annotationClass, annotation));
                     }
+                    constructFinalOperation(methodBuilder, field.getField(), clazz, operationBlocks);
                 }
             }
 
@@ -142,19 +143,32 @@ public abstract class OverrideProcessor extends BaseOverrideProcessor {
         repositoryEntries.add(new RepositoryEntry(rule, clazz, EntryType.NEW));
     }
 
-    private void constructOperation(Rule rule, Class<? extends Annotation> annotationClass, Annotation annotation, MethodSpec.Builder builder, Field field, Class<?> clazz) {
+    private CodeBlock constructOperation(Rule rule, Class<? extends Annotation> annotationClass, Annotation annotation) {
         List<Object> operands = new ArrayList<>();
 
         CompositeRule baseRule = rule.getValueRule();
         String operation = constructBasicOperation(baseRule, baseRule.getConjunction(), annotationClass, annotation, operands);
 
-        String setter = getSetterName(field.getName(), isBoolean(field.getType()));
-        Arrays.stream(clazz.getMethods())
-                .filter(method -> method.getName().equals(setter))
-                .findFirst()
-                .orElseThrow(() -> new UnsupportedOperationException("A cloak-able class should have a setter defined for all fields. Class: " + clazz.getName() + " Field: " + field.getName()));
+        return CodeBlock.of(operation, operands.toArray());
+    }
 
-        builder.beginControlFlow("if (" + operation + ")", operands.toArray());
+    private void constructFinalOperation(MethodSpec.Builder builder, Field field, Class<?> clazz, List<CodeBlock> operationBlocks) {
+        String setter = getSetterName(field.getName(), isBoolean(field.getType()));
+        try {
+            clazz.getMethod(setter, field.getType());
+        } catch (NoSuchMethodException e) {
+            throw new UnsupportedOperationException("A cloak-able class should have a setter defined for all fields. Class: " + clazz.getName() + " Field: " + field.getName());
+        }
+
+        StringBuilder operationBuilder = new StringBuilder();
+        for (int i = 0; i < operationBlocks.size(); i++) {
+            operationBuilder.append("($L)");
+            if (i != operationBlocks.size() - 1) {
+                operationBuilder.append(" || ");
+            }
+        }
+
+        builder.beginControlFlow("if (" + operationBuilder.toString() + ")", operationBlocks.toArray());
         builder.addStatement("$L.$L(null)", OBJECT_PARAMETER, setter);
         builder.endControlFlow();
     }
