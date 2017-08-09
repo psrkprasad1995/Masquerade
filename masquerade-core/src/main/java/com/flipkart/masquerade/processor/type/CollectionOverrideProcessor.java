@@ -48,17 +48,16 @@ public class CollectionOverrideProcessor extends BaseOverrideProcessor {
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, Collection.class);
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "[");
+            methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "[");
             methodBuilder.beginControlFlow("for (Object o : $L)", OBJECT_PARAMETER);
             /* And recursively call this entry method for each object */
-            methodBuilder.addStatement("$L.append($L.$L(o, $L))", SERIALIZED_OBJECT, CLOAK_PARAMETER, ENTRY_METHOD, EVAL_PARAMETER);
+            methodBuilder.addStatement("$L.$L(o, $L, $L)", CLOAK_PARAMETER, ENTRY_METHOD, EVAL_PARAMETER, SERIALIZED_OBJECT);
             methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
             methodBuilder.endControlFlow();
-            methodBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
+            methodBuilder.beginControlFlow("if ($L.charAt($L.length() - 1) == ',')", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
             methodBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
             methodBuilder.endControlFlow();
             methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
-            methodBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
         } else {
             methodBuilder.beginControlFlow("for (Object o : $L)", OBJECT_PARAMETER);
             methodBuilder.addStatement("$L.$L(o, $L)", CLOAK_PARAMETER, ENTRY_METHOD, EVAL_PARAMETER);

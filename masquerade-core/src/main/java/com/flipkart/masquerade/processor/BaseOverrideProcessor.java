@@ -74,10 +74,11 @@ public abstract class BaseOverrideProcessor {
         methodBuilder.addParameter(getRepositoryClass(configuration), SET_PARAMETER);
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.returns(String.class);
+            methodBuilder.addParameter(StringBuilder.class, SERIALIZED_OBJECT);
 
             methodBuilder.beginControlFlow("if ($L == null)", OBJECT_PARAMETER);
-            methodBuilder.addStatement("return null");
+            methodBuilder.addStatement("$L.append($L)", SERIALIZED_OBJECT, NULL_STRING);
+            methodBuilder.addStatement("return");
             methodBuilder.endControlFlow();
         }
 
@@ -108,6 +109,13 @@ public abstract class BaseOverrideProcessor {
         /* Implements the interface and attaches the current class as a Generic bound */
         implBuilder.addSuperinterface(ParameterizedTypeName.get(getRuleInterface(configuration, rule), typeName));
         implBuilder.addMethod(method);
+
+        if (configuration.isNativeSerializationEnabled()) {
+            implBuilder.addField(
+                    FieldSpec.builder(String.class, NULL_STRING, Modifier.PRIVATE, Modifier.FINAL)
+                            .initializer("$S", "null").build());
+        }
+
         return implBuilder.build();
     }
 

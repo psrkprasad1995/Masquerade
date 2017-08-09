@@ -49,7 +49,7 @@ public class NoOpOverrideProcessor extends BaseOverrideProcessor {
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, Object.class);
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addStatement("return null");
+            methodBuilder.addStatement("return");
         }
 
         return generateImplementationType(rule, Object.class, implName, methodBuilder.build());

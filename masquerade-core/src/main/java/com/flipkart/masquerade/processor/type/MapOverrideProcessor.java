@@ -48,17 +48,17 @@ public class MapOverrideProcessor extends BaseOverrideProcessor {
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, Map.class);
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "{");
+            methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "{");
 
             methodBuilder.addStatement(
-                    "$L.forEach((k, v) -> $L.append($S).append(k).append($S).append($S).append($L.$L(v, $L)).append($S))",
-                    OBJECT_PARAMETER, SERIALIZED_OBJECT, QUOTES, QUOTES, ":", CLOAK_PARAMETER, ENTRY_METHOD, EVAL_PARAMETER, ",");
+                    "$L.forEach((k, v) -> { $L.append($S); $L.append(k); $L.append($S); $L.append($S); $L.$L(v, $L, $L); $L.append($S); })",
+                    OBJECT_PARAMETER, SERIALIZED_OBJECT, QUOTES, SERIALIZED_OBJECT, SERIALIZED_OBJECT, QUOTES, SERIALIZED_OBJECT, ":", CLOAK_PARAMETER, ENTRY_METHOD, EVAL_PARAMETER, SERIALIZED_OBJECT, SERIALIZED_OBJECT, ",");
 
             methodBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
+            methodBuilder.beginControlFlow("if ($L.charAt($L.length() - 1) == ',')", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
             methodBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
             methodBuilder.endControlFlow();
             methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "}");
-            methodBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
         } else {
             methodBuilder.addStatement("$L.$L($L.values(), $L)", CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
         }

@@ -23,8 +23,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
 import static com.flipkart.masquerade.util.Helper.getToStringImplementationName;
-import static com.flipkart.masquerade.util.Strings.OBJECT_PARAMETER;
-import static com.flipkart.masquerade.util.Strings.QUOTES;
+import static com.flipkart.masquerade.util.Strings.*;
 
 /**
  * Created by shrey.garg on 16/07/17.
@@ -47,7 +46,7 @@ public class ToStringProcessor extends BaseOverrideProcessor {
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, Object.class);
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addStatement("return $S + $L.toString() + $S", QUOTES, OBJECT_PARAMETER, QUOTES);
+            methodBuilder.addStatement("$L.append($S + $L.toString() + $S)", SERIALIZED_OBJECT, QUOTES, OBJECT_PARAMETER, QUOTES);
         }
 
         return generateImplementationType(rule, Object.class, implName, methodBuilder.build());

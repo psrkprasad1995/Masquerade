@@ -16,15 +16,19 @@
 
 package com.flipkart.masquerade.processor.type;
 
+import com.fasterxml.jackson.core.io.CharTypes;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.processor.BaseOverrideProcessor;
 import com.flipkart.masquerade.rule.Rule;
+import com.squareup.javapoet.ArrayTypeName;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
+import javax.lang.model.element.Modifier;
+
 import static com.flipkart.masquerade.util.Helper.getStringImplementationName;
-import static com.flipkart.masquerade.util.Strings.OBJECT_PARAMETER;
-import static com.flipkart.masquerade.util.Strings.QUOTES;
+import static com.flipkart.masquerade.util.Strings.*;
 
 /**
  * Created by shrey.garg on 24/07/17.
@@ -47,9 +51,27 @@ public class StringOverrideProcessor extends BaseOverrideProcessor {
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, String.class);
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addStatement("return $S + $L + $S", QUOTES, OBJECT_PARAMETER, QUOTES);
+            methodBuilder.addStatement("$L.ensureCapacity($L.length() + $L.length() + 2);", SERIALIZED_OBJECT, SERIALIZED_OBJECT, OBJECT_PARAMETER);
+            methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, QUOTES);
+            methodBuilder.beginControlFlow("for (int i = 0; i < $L.length(); i++)", OBJECT_PARAMETER);
+            methodBuilder.addStatement("char c = $L.charAt(i);", OBJECT_PARAMETER);
+            methodBuilder.beginControlFlow("if (c < escLen && escCodes[c] != 0)");
+            methodBuilder.addStatement("$L.append((char) 92);", SERIALIZED_OBJECT);
+            methodBuilder.addStatement("$L.append((char) escCodes[c]);", SERIALIZED_OBJECT);
+            methodBuilder.nextControlFlow("else");
+            methodBuilder.addStatement("$L.append(c)", SERIALIZED_OBJECT);
+            methodBuilder.endControlFlow();
+            methodBuilder.endControlFlow();
+            methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, QUOTES);
         }
 
-        return generateImplementationType(rule, String.class, implName, methodBuilder.build());
+        TypeSpec.Builder builder = generateImplementationType(rule, String.class, implName, methodBuilder.build()).toBuilder();
+        builder.addField(
+                FieldSpec.builder(ArrayTypeName.of(Integer.TYPE), "escCodes", Modifier.PRIVATE, Modifier.FINAL)
+                        .initializer("$T.get7BitOutputEscapes()", CharTypes.class).build());
+        builder.addField(
+                FieldSpec.builder(Integer.TYPE, "escLen", Modifier.PRIVATE, Modifier.FINAL)
+                        .initializer("escCodes.length").build());
+        return builder.build();
     }
 }

@@ -44,27 +44,32 @@ public class SerializationRuleObjectProcessor extends RuleObjectProcessor {
 
     @Override
     protected void handleReturnsForNullObjects(MethodSpec.Builder objectMaskBuilder) {
-        objectMaskBuilder.addStatement("return null");
+        objectMaskBuilder.addStatement("$L.append($L)", SERIALIZED_OBJECT, NULL_STRING);
+        objectMaskBuilder.addStatement("return");
     }
 
     @Override
     protected void handleRegisteredClasses(MethodSpec.Builder objectMaskBuilder) {
-        objectMaskBuilder.addStatement("return $L.$L($L, $L, this, $L)", MASKER_VARIABLE, INTERFACE_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER);
+        objectMaskBuilder.addStatement("$L.$L($L, $L, this, $L, $L)", MASKER_VARIABLE, INTERFACE_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER, SERIALIZED_OBJECT);
     }
 
     @Override
     protected void handleMaps(Rule rule, MethodSpec.Builder objectMaskBuilder) {
-        objectMaskBuilder.addStatement("return $L.$L().$L(($T) $L, $L, this, $L)", SET_PARAMETER, getMapVariableName(rule), INTERFACE_METHOD, Map.class, OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER);
+        addMethodCall(objectMaskBuilder, getMapVariableName(rule), Map.class);
     }
 
     @Override
     protected void handleCollections(Rule rule, MethodSpec.Builder objectMaskBuilder) {
-        objectMaskBuilder.addStatement("return $L.$L().$L(($T) $L, $L, this, $L)", SET_PARAMETER, getCollectionVariableName(rule), INTERFACE_METHOD, Collection.class, OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER);
+        addMethodCall(objectMaskBuilder, getCollectionVariableName(rule), Collection.class);
     }
 
     @Override
     protected void handleObjectArrays(Rule rule, MethodSpec.Builder objectMaskBuilder) {
-        objectMaskBuilder.addStatement("return $L.$L().$L(($T) $L, $L, this, $L)", SET_PARAMETER, getObjectArrayVariableName(rule), INTERFACE_METHOD, ArrayTypeName.of(Object.class), OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER);
+        addMethodCall(objectMaskBuilder, getObjectArrayVariableName(rule), ArrayTypeName.of(Object.class));
+    }
+
+    private void addMethodCall(MethodSpec.Builder objectMaskBuilder, String methodName, Object clazz) {
+        objectMaskBuilder.addStatement("$L.$L().$L(($T) $L, $L, this, $L, $L)", SET_PARAMETER, methodName, INTERFACE_METHOD, clazz, OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER, SERIALIZED_OBJECT);
     }
 
     @Override
@@ -72,20 +77,19 @@ public class SerializationRuleObjectProcessor extends RuleObjectProcessor {
         objectMaskBuilder.nextControlFlow("else if ($L.getClass().isArray())", OBJECT_PARAMETER);
         /* Handle char[] separately */
         objectMaskBuilder.beginControlFlow("if ($L instanceof $T[])", OBJECT_PARAMETER, Character.TYPE);
-        objectMaskBuilder.addStatement("return $L.$L().$L(($T) $L, $L, this, $L)", SET_PARAMETER, getPrimitiveArrayVariableName(rule, Character.TYPE), INTERFACE_METHOD, ArrayTypeName.of(Character.TYPE), OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER);
+        addMethodCall(objectMaskBuilder, getPrimitiveArrayVariableName(rule, Character.TYPE), ArrayTypeName.of(Character.TYPE));
         /* Need to check for all primitive types individually */
         List<Class<?>> primitiveTypes = new ArrayList<>(getPrimitivesTypes());
         for (int i = 0; i < primitiveTypes.size(); i++) {
             Class<?> primitiveType = primitiveTypes.get(i);
             objectMaskBuilder.nextControlFlow("else if ($L instanceof $T[])", OBJECT_PARAMETER, primitiveType);
-            objectMaskBuilder.addStatement("return $L.$L().$L(($T) $L, $L, this, $L)", SET_PARAMETER, getPrimitiveArrayVariableName(rule, primitiveType), INTERFACE_METHOD, ArrayTypeName.of(primitiveType), OBJECT_PARAMETER, EVAL_PARAMETER, SET_PARAMETER);
+            addMethodCall(objectMaskBuilder, getPrimitiveArrayVariableName(rule, primitiveType), ArrayTypeName.of(primitiveType));
         }
         objectMaskBuilder.endControlFlow();
     }
 
     @Override
     protected void handleReturns(MethodSpec.Builder objectMaskBuilder) {
-        objectMaskBuilder.returns(String.class);
-        objectMaskBuilder.addStatement("return null");
+        // DO NOTHING
     }
 }

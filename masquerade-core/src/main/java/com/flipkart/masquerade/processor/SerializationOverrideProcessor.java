@@ -51,7 +51,7 @@ public class SerializationOverrideProcessor extends OverrideProcessor {
 
     @Override
     protected void declareInitializeVariables(MethodSpec.Builder methodBuilder) {
-        methodBuilder.addStatement("$T $L = new $T($S)", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class, "{");
+        methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "{");
     }
 
     @Override
@@ -136,12 +136,11 @@ public class SerializationOverrideProcessor extends OverrideProcessor {
 
     @Override
     protected void returns(MethodSpec.Builder methodBuilder) {
-        methodBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
+        methodBuilder.beginControlFlow("if ($L.charAt($L.length() - 1) == ',')", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
         methodBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
         methodBuilder.endControlFlow();
 
         methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "}");
-        methodBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
     }
 
     @Override
@@ -177,11 +176,11 @@ public class SerializationOverrideProcessor extends OverrideProcessor {
     }
 
     private void addRecursiveStatement(MethodSpec.Builder methodBuilder, String methodName, String getterName) {
-        methodBuilder.addStatement("$L.append($L.$L().$L($L.$L(), $L, $L, $L))", SERIALIZED_OBJECT, SET_PARAMETER, methodName, INTERFACE_METHOD, OBJECT_PARAMETER, getterName, EVAL_PARAMETER, CLOAK_PARAMETER, SET_PARAMETER);
+        methodBuilder.addStatement("$L.$L().$L($L.$L(), $L, $L, $L, $L)", SET_PARAMETER, methodName, INTERFACE_METHOD, OBJECT_PARAMETER, getterName, EVAL_PARAMETER, CLOAK_PARAMETER, SET_PARAMETER, SERIALIZED_OBJECT);
     }
 
     private void addDefaultRecursiveStatement(MethodSpec.Builder methodBuilder, String getterName) {
-        methodBuilder.addStatement("$L.append($L.$L($L.$L(), $L))", SERIALIZED_OBJECT, CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, getterName, EVAL_PARAMETER);
+        methodBuilder.addStatement("$L.$L($L.$L(), $L, $L)", CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, getterName, EVAL_PARAMETER, SERIALIZED_OBJECT);
     }
 
     private int findField(String name, List<FieldMeta> fields) {

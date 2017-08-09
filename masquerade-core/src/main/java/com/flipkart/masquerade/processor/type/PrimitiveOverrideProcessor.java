@@ -27,8 +27,7 @@ import java.util.List;
 
 import static com.flipkart.masquerade.util.Helper.getPrimitiveImplementationName;
 import static com.flipkart.masquerade.util.Helper.getWrapperTypes;
-import static com.flipkart.masquerade.util.Strings.OBJECT_PARAMETER;
-import static com.flipkart.masquerade.util.Strings.QUOTES;
+import static com.flipkart.masquerade.util.Strings.*;
 
 /**
  * Created by shrey.garg on 24/07/17.
@@ -55,11 +54,12 @@ public class PrimitiveOverrideProcessor extends BaseOverrideProcessor {
             if (configuration.isNativeSerializationEnabled()) {
                 if (primitiveType.equals(Character.class)) {
                     methodBuilder.beginControlFlow("if ($L == Character.valueOf('\\u0000'))", OBJECT_PARAMETER);
-                    methodBuilder.addStatement("return $S", QUOTES + "\\u0000" + QUOTES);
+                    methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, QUOTES + "\\u0000" + QUOTES);
+                    methodBuilder.addStatement("return");
                     methodBuilder.endControlFlow();
-                    methodBuilder.addStatement("return $S + String.valueOf((char) $L) + $S", QUOTES, OBJECT_PARAMETER, QUOTES);
+                    methodBuilder.addStatement("$L.append($S + String.valueOf((char) $L) + $S)", SERIALIZED_OBJECT, QUOTES, OBJECT_PARAMETER, QUOTES);
                 } else {
-                    methodBuilder.addStatement("return String.valueOf($L)", OBJECT_PARAMETER);
+                    methodBuilder.addStatement("$L.append(String.valueOf($L))", SERIALIZED_OBJECT, OBJECT_PARAMETER);
                 }
             }
 

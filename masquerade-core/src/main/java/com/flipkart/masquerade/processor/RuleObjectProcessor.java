@@ -19,6 +19,7 @@ package com.flipkart.masquerade.processor;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.rule.Rule;
 import com.squareup.javapoet.AnnotationSpec;
+import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
@@ -64,6 +65,10 @@ public abstract class RuleObjectProcessor {
         /* The second parameter refers to the Evaluator Object which will be used for comparisons */
         objectMaskBuilder.addParameter(rule.getEvaluatorClass(), EVAL_PARAMETER);
 
+        if (configuration.isNativeSerializationEnabled()) {
+            objectMaskBuilder.addParameter(StringBuilder.class, SERIALIZED_OBJECT);
+        }
+
         /* If a null Object is passed, return immediately */
         objectMaskBuilder.beginControlFlow("if ($L == null)", OBJECT_PARAMETER);
         handleReturnsForNullObjects(objectMaskBuilder);
@@ -105,6 +110,27 @@ public abstract class RuleObjectProcessor {
         handleReturns(objectMaskBuilder);
 
         cloakBuilder.addMethod(objectMaskBuilder.build());
+
+        if (configuration.isNativeSerializationEnabled()) {
+            MethodSpec.Builder objectBasicMaskBuilder = MethodSpec.methodBuilder(ENTRY_METHOD);
+            objectBasicMaskBuilder.addModifiers(Modifier.PUBLIC);
+            /* Adds an Object class parameter for which all the process at runtime will happen */
+            objectBasicMaskBuilder.addParameter(Object.class, OBJECT_PARAMETER);
+            /* The second parameter refers to the Evaluator Object which will be used for comparisons */
+            objectBasicMaskBuilder.addParameter(rule.getEvaluatorClass(), EVAL_PARAMETER);
+
+            objectBasicMaskBuilder.addStatement("$T $L = new $T()", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class);
+            objectBasicMaskBuilder.addStatement("this.$L($L, $L, $L)", ENTRY_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER, SERIALIZED_OBJECT);
+
+            objectBasicMaskBuilder.returns(String.class);
+            objectBasicMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
+
+            cloakBuilder.addMethod(objectBasicMaskBuilder.build());
+
+            cloakBuilder.addField(
+                    FieldSpec.builder(String.class, NULL_STRING, Modifier.PRIVATE, Modifier.FINAL)
+                            .initializer("$S", "null").build());
+        }
     }
 
     protected abstract void handleReturnsForNullObjects(MethodSpec.Builder objectMaskBuilder);

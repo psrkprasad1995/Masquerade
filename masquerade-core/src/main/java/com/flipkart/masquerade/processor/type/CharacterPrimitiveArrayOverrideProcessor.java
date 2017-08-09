@@ -29,6 +29,7 @@ import java.util.List;
 import static com.flipkart.masquerade.util.Helper.getPrimitiveArrayImplementationName;
 import static com.flipkart.masquerade.util.Strings.OBJECT_PARAMETER;
 import static com.flipkart.masquerade.util.Strings.QUOTES;
+import static com.flipkart.masquerade.util.Strings.SERIALIZED_OBJECT;
 
 /**
  * Created by shrey.garg on 24/07/17.
@@ -52,7 +53,7 @@ public class CharacterPrimitiveArrayOverrideProcessor extends BaseOverrideProces
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, ArrayTypeName.of(Character.TYPE));
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addStatement("return $S + new $T(($T[]) $L) + $S", QUOTES, String.class, Character.TYPE, OBJECT_PARAMETER, QUOTES);
+            methodBuilder.addStatement("$L.append($S + new $T(($T[]) $L) + $S)", SERIALIZED_OBJECT, QUOTES, String.class, Character.TYPE, OBJECT_PARAMETER, QUOTES);
         }
 
         return generateImplementationType(rule, ArrayTypeName.of(Character.TYPE), implName, methodBuilder.build());
