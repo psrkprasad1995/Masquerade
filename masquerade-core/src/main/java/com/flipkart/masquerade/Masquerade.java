@@ -18,6 +18,7 @@ package com.flipkart.masquerade;
 
 import com.flipkart.masquerade.processor.*;
 import com.flipkart.masquerade.rule.Rule;
+import com.flipkart.masquerade.util.EntryType;
 import com.flipkart.masquerade.util.RepositoryEntry;
 import com.flipkart.masquerade.util.TypeSpecContainer;
 import com.google.common.reflect.ClassPath;
@@ -78,6 +79,9 @@ public class Masquerade {
         for (Class<?> clazz : getClasses()) {
             /* Skip processing if the class is an Enum, Interface, Abstract or not a public class */
             if (clazz.isEnum() || clazz.isInterface() || getClassInformation(clazz).isAbstract() || !getClassInformation(clazz).isPublic()) {
+                if (clazz.isEnum()) {
+                    configuration.getRules().forEach(rule -> repositoryEntries.add(new RepositoryEntry(rule, clazz, EntryType.ENUM)));
+                }
                 continue;
             }
 

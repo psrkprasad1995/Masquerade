@@ -54,7 +54,6 @@ public class MapOverrideProcessor extends BaseOverrideProcessor {
                     "$L.forEach((k, v) -> { $L.append($S); $L.append(k); $L.append($S); $L.append($S); $L.$L(v, $L, $L); $L.append($S); })",
                     OBJECT_PARAMETER, SERIALIZED_OBJECT, QUOTES, SERIALIZED_OBJECT, SERIALIZED_OBJECT, QUOTES, SERIALIZED_OBJECT, ":", CLOAK_PARAMETER, ENTRY_METHOD, EVAL_PARAMETER, SERIALIZED_OBJECT, SERIALIZED_OBJECT, ",");
 
-            methodBuilder.beginControlFlow("if ($L.length() > 1)", SERIALIZED_OBJECT);
             methodBuilder.beginControlFlow("if ($L.charAt($L.length() - 1) == ',')", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
             methodBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
             methodBuilder.endControlFlow();
