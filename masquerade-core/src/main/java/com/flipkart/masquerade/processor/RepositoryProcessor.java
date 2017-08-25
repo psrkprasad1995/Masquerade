@@ -84,6 +84,7 @@ public class RepositoryProcessor {
             if (configuration.isNativeSerializationEnabled()) {
                 handlePrimitiveArrayEntries(repositoryBuilder, rule, initializer);
                 handleCharacterPrimitiveArrayEntries(repositoryBuilder, rule, initializer);
+                handleNumericalEntries(repositoryBuilder, rule, initializer);
             } else {
                 handleNoOpEntry(repositoryBuilder, rule, initializer);
             }
@@ -152,6 +153,15 @@ public class RepositoryProcessor {
     private void handleCharacterPrimitiveArrayEntries(TypeSpec.Builder repositoryBuilder, Rule rule, CodeBlock.Builder initializer) {
         handleEntry(repositoryBuilder, initializer,
                 getPrimitiveArrayImplementationClass(configuration, rule, Character.TYPE), getPrimitiveArrayVariableName(rule, Character.TYPE));
+    }
+
+    private void handleNumericalEntries(TypeSpec.Builder repositoryBuilder, Rule rule, CodeBlock.Builder initializer) {
+        for (Class<?> wrapperType : configuration.numericalSerializableClasses()) {
+            handleEntry(repositoryBuilder, initializer,
+                    getPrimitiveImplementationClass(configuration, rule, wrapperType), getPrimitiveVariableName(rule, wrapperType));
+
+            initializer.addStatement("$L.put($S, $L)", rule.getName(), wrapperType.getName(), getPrimitiveVariableName(rule, wrapperType));
+        }
     }
 
     private void handleProcessedEntries(TypeSpec.Builder repositoryBuilder, CodeBlock.Builder initializer, List<RepositoryEntry> repositoryEntries) {
