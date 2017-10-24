@@ -16,6 +16,7 @@
 
 package com.flipkart.masquerade.processor;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.rule.Rule;
 import com.squareup.javapoet.MethodSpec;
@@ -23,6 +24,8 @@ import com.squareup.javapoet.TypeSpec;
 import com.squareup.javapoet.TypeVariableName;
 
 import javax.lang.model.element.Modifier;
+
+import java.io.IOException;
 
 import static com.flipkart.masquerade.util.Helper.*;
 import static com.flipkart.masquerade.util.Strings.*;
@@ -60,9 +63,10 @@ public class InterfaceProcessor {
         methodBuilder.addParameter(rule.getEvaluatorClass(), EVAL_PARAMETER);
         methodBuilder.addParameter(getEntryClass(configuration), CLOAK_PARAMETER);
         methodBuilder.addParameter(getRepositoryClass(configuration), SET_PARAMETER);
+        methodBuilder.addException(IOException.class);
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addParameter(StringBuilder.class, SERIALIZED_OBJECT);
+            methodBuilder.addParameter(JsonGenerator.class, SERIALIZED_OBJECT);
         }
 
         ruleInterface.addMethod(methodBuilder.build());

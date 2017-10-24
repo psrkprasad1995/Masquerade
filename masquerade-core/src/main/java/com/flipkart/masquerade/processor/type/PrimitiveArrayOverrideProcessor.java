@@ -53,17 +53,11 @@ public class PrimitiveArrayOverrideProcessor extends BaseOverrideProcessor {
             MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, ArrayTypeName.of(primitiveType));
 
             if (configuration.isNativeSerializationEnabled()) {
-                /* Iterate over the array */
-                methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "[");
+                methodBuilder.addStatement("$L.writeStartArray()", SERIALIZED_OBJECT);
                 methodBuilder.beginControlFlow("for ($T o : $L)", primitiveType, OBJECT_PARAMETER);
-                /* And recursively call this entry method for each object */
                 methodBuilder.addStatement("$L.$L(o, $L, $L)", CLOAK_PARAMETER, ENTRY_METHOD, EVAL_PARAMETER, SERIALIZED_OBJECT);
-                methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
                 methodBuilder.endControlFlow();
-                methodBuilder.beginControlFlow("if ($L.charAt($L.length() - 1) == ',')", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-                methodBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-                methodBuilder.endControlFlow();
-                methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "]");
+                methodBuilder.addStatement("$L.writeEndArray()", SERIALIZED_OBJECT);
             }
 
             typeSpecs.add(generateImplementationType(rule, ArrayTypeName.of(primitiveType), implName, methodBuilder.build()));

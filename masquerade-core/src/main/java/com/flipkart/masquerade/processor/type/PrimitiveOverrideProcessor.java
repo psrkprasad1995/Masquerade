@@ -54,12 +54,12 @@ public class PrimitiveOverrideProcessor extends BaseOverrideProcessor {
             if (configuration.isNativeSerializationEnabled()) {
                 if (primitiveType.equals(Character.class)) {
                     methodBuilder.beginControlFlow("if ($L == Character.valueOf('\\u0000'))", OBJECT_PARAMETER);
-                    methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, QUOTES + "\\u0000" + QUOTES);
+                    methodBuilder.addStatement("$L.writeRawValue($S)", SERIALIZED_OBJECT,  QUOTES + "\\u0000" + QUOTES);
                     methodBuilder.addStatement("return");
                     methodBuilder.endControlFlow();
-                    methodBuilder.addStatement("$L.append($S + String.valueOf((char) $L) + $S)", SERIALIZED_OBJECT, QUOTES, OBJECT_PARAMETER, QUOTES);
+                    methodBuilder.addStatement("$L.writeString(String.valueOf((char) $L))", SERIALIZED_OBJECT, OBJECT_PARAMETER);
                 } else {
-                    methodBuilder.addStatement("$L.append(String.valueOf($L))", SERIALIZED_OBJECT, OBJECT_PARAMETER);
+                    methodBuilder.addStatement("$L.writeRawValue(String.valueOf($L))", SERIALIZED_OBJECT, OBJECT_PARAMETER);
                 }
             }
 

@@ -22,6 +22,7 @@ import com.flipkart.masquerade.rule.Rule;
 import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
+import java.io.IOException;
 import java.util.Map;
 
 import static com.flipkart.masquerade.util.Helper.getMapImplementationName;
@@ -48,16 +49,14 @@ public class MapOverrideProcessor extends BaseOverrideProcessor {
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, Map.class);
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "{");
+
+            methodBuilder.addStatement("$L.writeStartObject();", SERIALIZED_OBJECT);
 
             methodBuilder.addStatement(
-                    "$L.forEach((k, v) -> { $L.append($S); $L.append(k); $L.append($S); $L.append($S); $L.$L(v, $L, $L); $L.append($S); })",
-                    OBJECT_PARAMETER, SERIALIZED_OBJECT, QUOTES, SERIALIZED_OBJECT, SERIALIZED_OBJECT, QUOTES, SERIALIZED_OBJECT, ":", CLOAK_PARAMETER, ENTRY_METHOD, EVAL_PARAMETER, SERIALIZED_OBJECT, SERIALIZED_OBJECT, ",");
+                    "$L.forEach((k, v) -> { try { $L.writeFieldName(String.valueOf(k)); $L.$L(v, $L, $L); } catch ($T e) { e.printStackTrace(); }})",
+                    OBJECT_PARAMETER, SERIALIZED_OBJECT, CLOAK_PARAMETER, ENTRY_METHOD, EVAL_PARAMETER, SERIALIZED_OBJECT, IOException.class);
 
-            methodBuilder.beginControlFlow("if ($L.charAt($L.length() - 1) == ',')", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-            methodBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-            methodBuilder.endControlFlow();
-            methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "}");
+            methodBuilder.addStatement("$L.writeEndObject();", SERIALIZED_OBJECT);
         } else {
             methodBuilder.addStatement("$L.$L($L.values(), $L)", CLOAK_PARAMETER, ENTRY_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER);
         }

@@ -53,7 +53,7 @@ public class CharacterPrimitiveArrayOverrideProcessor extends BaseOverrideProces
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, ArrayTypeName.of(Character.TYPE));
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addStatement("$L.append($S + new $T(($T[]) $L) + $S)", SERIALIZED_OBJECT, QUOTES, String.class, Character.TYPE, OBJECT_PARAMETER, QUOTES);
+            methodBuilder.addStatement("$L.writeString(new $T(($T[]) $L))", SERIALIZED_OBJECT, String.class, Character.TYPE, OBJECT_PARAMETER);
         }
 
         return generateImplementationType(rule, ArrayTypeName.of(Character.TYPE), implName, methodBuilder.build());

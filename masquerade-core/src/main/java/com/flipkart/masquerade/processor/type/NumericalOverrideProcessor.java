@@ -54,7 +54,7 @@ public class NumericalOverrideProcessor extends BaseOverrideProcessor {
             MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, numericalType);
 
             if (configuration.isNativeSerializationEnabled()) {
-                methodBuilder.addStatement("$L.append($L.toString())", SERIALIZED_OBJECT, OBJECT_PARAMETER);
+                methodBuilder.addStatement("$L.writeRawValue($L.toString())", SERIALIZED_OBJECT, OBJECT_PARAMETER);
             }
 
             typeSpecs.add(generateImplementationType(rule, numericalType, implName, methodBuilder.build()));

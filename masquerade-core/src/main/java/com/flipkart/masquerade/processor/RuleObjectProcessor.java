@@ -16,6 +16,9 @@
 
 package com.flipkart.masquerade.processor;
 
+import com.fasterxml.jackson.core.JsonEncoding;
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.rule.Rule;
 import com.squareup.javapoet.AnnotationSpec;
@@ -24,6 +27,8 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeSpec;
 
 import javax.lang.model.element.Modifier;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Map;
 
@@ -58,15 +63,17 @@ public abstract class RuleObjectProcessor {
     public void addEntry(Rule rule) {
         MethodSpec.Builder objectMaskBuilder = MethodSpec.methodBuilder(ENTRY_METHOD);
         objectMaskBuilder.addModifiers(Modifier.PUBLIC);
+        objectMaskBuilder.addException(IOException.class);
         /* Suppress warnings as the generated code will never cause a CLassCastException */
         objectMaskBuilder.addAnnotation(AnnotationSpec.builder(SuppressWarnings.class).addMember("value", "$S", "unchecked").build());
         /* Adds an Object class parameter for which all the process at runtime will happen */
         objectMaskBuilder.addParameter(Object.class, OBJECT_PARAMETER);
         /* The second parameter refers to the Evaluator Object which will be used for comparisons */
         objectMaskBuilder.addParameter(rule.getEvaluatorClass(), EVAL_PARAMETER);
+        objectMaskBuilder.addException(IOException.class);
 
         if (configuration.isNativeSerializationEnabled()) {
-            objectMaskBuilder.addParameter(StringBuilder.class, SERIALIZED_OBJECT);
+            objectMaskBuilder.addParameter(JsonGenerator.class, SERIALIZED_OBJECT);
         }
 
         /* If a null Object is passed, return immediately */
@@ -118,12 +125,18 @@ public abstract class RuleObjectProcessor {
             objectBasicMaskBuilder.addParameter(Object.class, OBJECT_PARAMETER);
             /* The second parameter refers to the Evaluator Object which will be used for comparisons */
             objectBasicMaskBuilder.addParameter(rule.getEvaluatorClass(), EVAL_PARAMETER);
+            objectBasicMaskBuilder.addException(IOException.class);
 
-            objectBasicMaskBuilder.addStatement("$T $L = new $T()", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class);
+            objectBasicMaskBuilder.addStatement("$T $L = new $T()", JsonFactory.class, "jfactory", JsonFactory.class);
+            objectBasicMaskBuilder.addStatement("$T $L = new $T()", ByteArrayOutputStream.class, "stream", ByteArrayOutputStream.class);
+            objectBasicMaskBuilder.addStatement("$T $L = jfactory.createGenerator($L, $T.UTF8)", JsonGenerator.class, SERIALIZED_OBJECT, "stream", JsonEncoding.class);
+
+//            objectBasicMaskBuilder.addStatement("$T $L = new $T()", StringBuilder.class, SERIALIZED_OBJECT, StringBuilder.class);
             objectBasicMaskBuilder.addStatement("this.$L($L, $L, $L)", ENTRY_METHOD, OBJECT_PARAMETER, EVAL_PARAMETER, SERIALIZED_OBJECT);
 
             objectBasicMaskBuilder.returns(String.class);
-            objectBasicMaskBuilder.addStatement("return $L.toString()", SERIALIZED_OBJECT);
+            objectBasicMaskBuilder.addStatement("$L.close()", SERIALIZED_OBJECT);
+            objectBasicMaskBuilder.addStatement("return $L.toString()", "stream");
 
             cloakBuilder.addMethod(objectBasicMaskBuilder.build());
 

@@ -51,7 +51,9 @@ public class SerializationOverrideProcessor extends OverrideProcessor {
 
     @Override
     protected void declareInitializeVariables(MethodSpec.Builder methodBuilder) {
-        methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "{");
+
+        methodBuilder.addStatement("$L.writeStartObject()", SERIALIZED_OBJECT);
+
     }
 
     @Override
@@ -105,8 +107,12 @@ public class SerializationOverrideProcessor extends OverrideProcessor {
 
     @Override
     protected void handleSyntheticFields(FieldMeta field, MethodSpec.Builder methodBuilder) {
+        methodBuilder.addStatement("$L.writeStringField($S, $S)", SERIALIZED_OBJECT, field.getSerializableName(), field.getSyntheticValue());
+/*
+
         methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, QUOTES + field.getSerializableName() + QUOTES + ":" + QUOTES + field.getSyntheticValue() + QUOTES);
         methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
+*/
     }
 
     @Override
@@ -123,12 +129,12 @@ public class SerializationOverrideProcessor extends OverrideProcessor {
                 methodBuilder.beginControlFlow("$L", inclusionCondition);
             }
         }
-        methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, QUOTES + field.getSerializableName() + QUOTES + ":");
+        methodBuilder.addStatement("$L.writeFieldName($S)", SERIALIZED_OBJECT, field.getSerializableName());
     }
 
     @Override
     protected void handleFieldValues(FieldMeta field, MethodSpec.Builder methodBuilder) {
-        methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
+//        methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, ",");
         if (field.getInclusionLevel() != JsonInclude.Include.ALWAYS && field.isMaskable()) {
             methodBuilder.endControlFlow();
         }
@@ -136,11 +142,7 @@ public class SerializationOverrideProcessor extends OverrideProcessor {
 
     @Override
     protected void returns(MethodSpec.Builder methodBuilder) {
-        methodBuilder.beginControlFlow("if ($L.charAt($L.length() - 1) == ',')", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-        methodBuilder.addStatement("$L.deleteCharAt($L.length() - 1)", SERIALIZED_OBJECT, SERIALIZED_OBJECT);
-        methodBuilder.endControlFlow();
-
-        methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, "}");
+        methodBuilder.addStatement("$L.writeEndObject()", SERIALIZED_OBJECT);
     }
 
     @Override

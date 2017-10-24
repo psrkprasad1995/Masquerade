@@ -51,7 +51,11 @@ public class StringOverrideProcessor extends BaseOverrideProcessor {
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, String.class);
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addStatement("$L.ensureCapacity($L.length() + $L.length() + 2);", SERIALIZED_OBJECT, SERIALIZED_OBJECT, OBJECT_PARAMETER);
+
+            methodBuilder.addStatement("$L.writeString($L)", SERIALIZED_OBJECT, OBJECT_PARAMETER);
+
+
+            /*methodBuilder.addStatement("$L.ensureCapacity($L.length() + $L.length() + 2);", SERIALIZED_OBJECT, SERIALIZED_OBJECT, OBJECT_PARAMETER);
             methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, QUOTES);
             methodBuilder.beginControlFlow("for (int i = 0; i < $L.length(); i++)", OBJECT_PARAMETER);
             methodBuilder.addStatement("char c = $L.charAt(i);", OBJECT_PARAMETER);
@@ -62,16 +66,16 @@ public class StringOverrideProcessor extends BaseOverrideProcessor {
             methodBuilder.addStatement("$L.append(c)", SERIALIZED_OBJECT);
             methodBuilder.endControlFlow();
             methodBuilder.endControlFlow();
-            methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, QUOTES);
+            methodBuilder.addStatement("$L.append($S)", SERIALIZED_OBJECT, QUOTES);*/
         }
 
         TypeSpec.Builder builder = generateImplementationType(rule, String.class, implName, methodBuilder.build()).toBuilder();
-        builder.addField(
+        /*builder.addField(
                 FieldSpec.builder(ArrayTypeName.of(Integer.TYPE), "escCodes", Modifier.PRIVATE, Modifier.FINAL)
                         .initializer("$T.get7BitOutputEscapes()", CharTypes.class).build());
         builder.addField(
                 FieldSpec.builder(Integer.TYPE, "escLen", Modifier.PRIVATE, Modifier.FINAL)
-                        .initializer("escCodes.length").build());
+                        .initializer("escCodes.length").build());*/
         return builder.build();
     }
 }

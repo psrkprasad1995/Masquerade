@@ -44,7 +44,7 @@ public class SerializationRuleObjectProcessor extends RuleObjectProcessor {
 
     @Override
     protected void handleReturnsForNullObjects(MethodSpec.Builder objectMaskBuilder) {
-        objectMaskBuilder.addStatement("$L.append($L)", SERIALIZED_OBJECT, NULL_STRING);
+        objectMaskBuilder.addStatement("$L.writeNull()", SERIALIZED_OBJECT);
         objectMaskBuilder.addStatement("return");
     }
 

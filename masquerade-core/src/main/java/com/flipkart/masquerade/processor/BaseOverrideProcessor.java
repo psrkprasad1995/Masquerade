@@ -16,11 +16,14 @@
 
 package com.flipkart.masquerade.processor;
 
+import com.fasterxml.jackson.core.JsonGenerator;
 import com.flipkart.masquerade.Configuration;
 import com.flipkart.masquerade.rule.Rule;
 import com.squareup.javapoet.*;
 
 import javax.lang.model.element.Modifier;
+
+import java.io.IOException;
 
 import static com.flipkart.masquerade.util.Helper.*;
 import static com.flipkart.masquerade.util.Strings.*;
@@ -72,12 +75,13 @@ public abstract class BaseOverrideProcessor {
         methodBuilder.addParameter(rule.getEvaluatorClass(), EVAL_PARAMETER);
         methodBuilder.addParameter(getEntryClass(configuration), CLOAK_PARAMETER);
         methodBuilder.addParameter(getRepositoryClass(configuration), SET_PARAMETER);
+        methodBuilder.addException(IOException.class);
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addParameter(StringBuilder.class, SERIALIZED_OBJECT);
+            methodBuilder.addParameter(JsonGenerator.class, SERIALIZED_OBJECT);
 
             methodBuilder.beginControlFlow("if ($L == null)", OBJECT_PARAMETER);
-            methodBuilder.addStatement("$L.append($L)", SERIALIZED_OBJECT, NULL_STRING);
+            methodBuilder.addStatement("$L.writeNull()", SERIALIZED_OBJECT);
             methodBuilder.addStatement("return");
             methodBuilder.endControlFlow();
         }

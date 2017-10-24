@@ -46,7 +46,7 @@ public class EnumOverrideProcessor extends BaseOverrideProcessor {
         MethodSpec.Builder methodBuilder = generateOverrideMethod(rule, Object.class);
 
         if (configuration.isNativeSerializationEnabled()) {
-            methodBuilder.addStatement("$L.append($S + String.valueOf($L) + $S)", SERIALIZED_OBJECT, QUOTES, OBJECT_PARAMETER, QUOTES);
+            methodBuilder.addStatement("$L.writeString(String.valueOf($L))", SERIALIZED_OBJECT, OBJECT_PARAMETER);
         }
 
         return generateImplementationType(rule, Object.class, implName, methodBuilder.build());
